@@ -7,6 +7,5 @@ wheels/
 *.py[oc]
 *.egg-info
 
-.python-version
 .coverage
 .venv
