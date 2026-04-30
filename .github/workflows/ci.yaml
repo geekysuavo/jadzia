@@ -1,0 +1,39 @@
+# .github/workflows/ci.yaml
+
+name: ci
+on: [push]
+
+jobs:
+  lint:
+    name: lint
+    runs-on: ubuntu-latest
+    steps:
+      - &checkout
+        name: "Checkout"
+        uses: actions/checkout@v6
+      - &setup-uv
+        name: "Setup uv"
+        uses: astral-sh/setup-uv@v8.1.0
+      - &setup-python
+        name: "Setup python"
+        uses: actions/setup-python@v6
+        with:
+          python-version-file: pyproject.yaml
+      - &install
+        name: "Install the project"
+        run: uv sync --locked --all-extras --dev
+      - name: "Check formatting"
+        run: uv run ruff check jadzia test
+      - name: "Check typing"
+        run: uv run ty check jadzia
+
+  test:
+    name: test
+    runs-on: ubuntu-latest
+    steps:
+      - *checkout
+      - *setup-uv
+      - *setup-python
+      - *install
+      - name: "Run tests"
+        run: uv run pytest -v test
