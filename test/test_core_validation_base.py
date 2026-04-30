@@ -1,3 +1,5 @@
+"""Tests of the validation base class."""
+
 # Standard
 from enum import StrEnum
 

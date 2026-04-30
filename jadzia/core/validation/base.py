@@ -6,11 +6,13 @@ from typing import Any, Self
 
 # Third party
 import yaml
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 
-class Config(BaseModel, extra="forbid", frozen=True):
+class Config(BaseModel):
     """Base class for all validated configuration objects."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
 
     def to_yaml(self, file: Path):
         """
