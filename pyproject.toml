@@ -33,7 +33,6 @@ target-version = "py312"
 extend-select = [
     "A",    # flake8-builtins
     "C",    # complexity
-    "COM",  # flake8-commas
     "D",    # pydocstyle
     "E",    # pycodestyle-error
     "F",    # pyflakes

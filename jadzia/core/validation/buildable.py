@@ -105,8 +105,7 @@ class BuildableConfig[InstanceT](Config):
             definitions obtained by inspection.
         """
         field_defs: dict[str, tuple[Any, Any]] = {}
-        instance_type_annotation = cls.__annotations__["instance_type"]
-        field_defs["instance_type"] = (instance_type_annotation, instance_type)
+        field_defs["instance_type"] = (cls.find_instance_type(), instance_type)
         inspect_initializer(instance_type, field_defs=field_defs, **defaults)
         cls.auto_hook(instance_type, field_defs=field_defs)
         return create_model(  # ty: ignore[no-matching-overload]
@@ -116,6 +115,24 @@ class BuildableConfig[InstanceT](Config):
             __module__=location or __name__,
             **field_defs,
         )
+
+    @classmethod
+    def find_instance_type(cls) -> type:
+        """
+        Find the nearest `instance_type` annotation in the class hierarchy.
+
+        The first parent class in the hierarchy is always traversed, under the
+        assumption that secondary parents (e.g. `ABC`) are after the parent
+        that holds the instance type field.
+        """
+        base_cls = cls
+        while "instance_type" not in base_cls.__annotations__:
+            if base_cls.__bases__:
+                base_cls = base_cls.__bases__[0]
+            else:
+                raise ValueError("unable to find instance type")  # pragma: no cover
+
+        return base_cls.__annotations__["instance_type"]
 
 
 __all__ = ["BuildableConfig", "Exclude"]
