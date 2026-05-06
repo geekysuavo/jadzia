@@ -10,6 +10,7 @@ dependencies = [
     "jax>=0.10.0",
     "msgpack>=1.1.2",
     "numpy>=2.4.4",
+    "optax>=0.2.8",
     "polars>=1.40.1",
     "pydantic>=2.13.3",
     "pyyaml>=6.0.3",
