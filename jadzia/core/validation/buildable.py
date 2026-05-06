@@ -61,8 +61,9 @@ class BuildableConfig[InstanceT](Config):
 
     def build_instance(self) -> InstanceT:
         """Build an instance based on this configuration."""
+        cls = type(self)
         kwargs = self.model_dump_for_instance()
-        return self.instance_type(**kwargs)
+        return cls.instance_type(**kwargs)
 
     @classmethod
     def auto_hook(
