@@ -1,0 +1,49 @@
+# mkdocs.yaml
+
+docs_dir: doc
+site_name: Jadzia
+site_description: "Pydantic + JAX == Dax?"
+
+repo_name: geekysuavo/jadzia
+repo_url: https://github.com/geekysuavo/jadzia
+edit_uri: ""
+
+strict: true
+
+theme:
+  name: gitbook
+
+markdown_extensions:
+- pymdownx.arithmatex:
+    generic: true
+- toc:
+    permalink: "#"
+    toc_depth: 4
+
+extra_javascript:
+- _static/mathjax.js
+- https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js
+
+plugins:
+- mkdocs-autoapi:
+    autoapi_dir: jadzia
+    autoapi_root: ref
+- mkdocstrings:
+    handlers:
+      python:
+        paths: [.]
+        inventories:
+        - https://docs.kidger.site/equinox/objects.inv
+        - https://google-grain.readthedocs.io/en/latest/objects.inv
+        - https://docs.jax.dev/en/latest/objects.inv
+        - https://numpy.org/doc/stable/objects.inv
+        - https://optax.readthedocs.io/en/latest/objects.inv
+        - https://docs.python.org/3/objects.inv
+        - https://pydantic.dev/docs/validation/latest/objects.inv
+        options:
+          docstring_section_style: list
+          members_order: source
+          show_overloads: false
+
+nav:
+- index.md

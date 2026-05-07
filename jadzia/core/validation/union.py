@@ -21,7 +21,7 @@ def _discriminate_tagged_union(value: Any) -> str | None:
 
     Returns:
         Value of the `type` key in the input dictionary or `None` if the input
-        is not a dictionary or does not contain that key.
+            is not a dictionary or does not contain that key.
 
     Important:
         This function _pops_ the `type` key out of `value`

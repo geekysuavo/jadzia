@@ -42,7 +42,8 @@ class BuildableConfig[InstanceT](Config):
 
         Returns:
             Dictionary that does not contain items for fields that were annotated
-            by `jadzia.core.validation.Exclude` in the class definition.
+                by [jadzia.core.validation.buildable.Exclude][] in the class
+                definition.
         """
         cls = type(self)
         exclude = {
@@ -98,8 +99,8 @@ class BuildableConfig[InstanceT](Config):
             defaults: Values used to set or override defaults of configuration fields.
 
         Returns:
-            New subclass created by `pydantic.create_model`, holding configuration
-            fields for all arguments to the initializer method of `instance_type`.
+            New subclass created by [pydantic.create_model][], holding configuration
+                fields for all arguments to the initializer method of `instance_type`.
 
         Note:
             Subclasses may override the `auto_hook` method to augment the field

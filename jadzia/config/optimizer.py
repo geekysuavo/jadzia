@@ -15,7 +15,7 @@ from jadzia.core.validation.union import UnionDiscriminator, UnionSerializer
 
 class Adam(OptimizerConfig):
     r"""
-    Configuration for `optax.adam`.
+    Configuration for [optax.adam][].
 
     Attributes:
         learning_rate: $\alpha_t$, Learning rate or learning rate schedule.
@@ -38,7 +38,7 @@ class Adam(OptimizerConfig):
 
 class AdamW(OptimizerConfig):
     r"""
-    Configuration for `optax.adamw`.
+    Configuration for [optax.adamw][].
 
     Attributes:
         learning_rate: $\alpha_t$, Learning rate or learning rate schedule.

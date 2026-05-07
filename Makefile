@@ -1,4 +1,4 @@
-.PHONY: all clean lint test ruff ty
+.PHONY: all clean doc lint ruff test ty
 
 all: lint test
 
@@ -12,6 +12,9 @@ ruff:
 
 ty:
 	uv run --group test ty check jadzia
+
+doc:
+	uv run --group doc mkdocs serve
 
 clean:
 	rm -rf jadzia.egg-info
