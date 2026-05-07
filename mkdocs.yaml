@@ -16,6 +16,7 @@ theme:
 markdown_extensions:
 - pymdownx.arithmatex:
     generic: true
+- admonition
 - toc:
     permalink: "#"
     toc_depth: 4
@@ -38,9 +39,13 @@ plugins:
         - https://docs.jax.dev/en/latest/objects.inv
         - https://numpy.org/doc/stable/objects.inv
         - https://optax.readthedocs.io/en/latest/objects.inv
-        - https://docs.python.org/3/objects.inv
+        - https://docs.pola.rs/api/python/stable/objects.inv
         - https://pydantic.dev/docs/validation/latest/objects.inv
+        - https://docs.python.org/3/objects.inv
         options:
+          docstring_options:
+            ignore_init_summary: true
+            merge_init_into_class: true
           docstring_section_style: list
           members_order: source
           show_overloads: false
