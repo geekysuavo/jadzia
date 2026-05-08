@@ -1,0 +1,14 @@
+details.note {
+  padding: 6pt;
+  padding-bottom: 0;
+
+  border-width: 1px;
+  border-style: solid;
+  border-color: rgba(173, 216, 230, 0.5);
+
+  background-color: rgba(173, 216, 230, 0.2);
+}
+
+details.note summary {
+  font-weight: bold;
+}
