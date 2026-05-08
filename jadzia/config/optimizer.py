@@ -8,8 +8,9 @@ import optax
 from pydantic import NonNegativeFloat, PositiveFloat, Tag
 
 # Dax
+from jadzia.config.schedule import Schedule
 from jadzia.core.validation.interval import UnitIntervalOpen
-from jadzia.core.validation.optimizer import OptimizerConfig, OptimizerInstanceType
+from jadzia.core.validation.optim import OptimizerConfig, OptimizerInstanceType
 from jadzia.core.validation.union import UnionDiscriminator, UnionSerializer
 
 
@@ -28,7 +29,7 @@ class Adam(OptimizerConfig):
 
     instance_type: ClassVar[OptimizerInstanceType] = optax.adam
 
-    learning_rate: PositiveFloat
+    learning_rate: PositiveFloat | Schedule
     b1: UnitIntervalOpen = 0.9
     b2: UnitIntervalOpen = 0.999
     eps: PositiveFloat = 1.0e-8
@@ -52,7 +53,7 @@ class AdamW(OptimizerConfig):
 
     instance_type: ClassVar[OptimizerInstanceType] = optax.adamw
 
-    learning_rate: PositiveFloat
+    learning_rate: PositiveFloat | Schedule
     b1: UnitIntervalOpen = 0.9
     b2: UnitIntervalOpen = 0.999
     eps: PositiveFloat = 1.0e-8

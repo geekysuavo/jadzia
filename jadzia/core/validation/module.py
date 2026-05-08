@@ -105,18 +105,19 @@ class ModuleConfig(BuildableConfig[eqx.Module]):
         """
         kwargs = self.model_dump_for_instance(pass_subclasses=(ModuleConfig,))
         name = self.instance_type.__name__
+        cls = type(self)
 
-        if self.requires_key and key is None:
+        if cls.requires_key and key is None:
             raise ValueError(f"module {name} requires a key")
-        elif not self.requires_key and key is not None:
+        elif not cls.requires_key and key is not None:
             raise ValueError(f"module {name} does not require a key")
         elif key is not None:
             kwargs[_KEY] = key
 
         if with_state:
-            return eqx.nn.make_with_state(self.instance_type)(**kwargs)
+            return eqx.nn.make_with_state(cls.instance_type)(**kwargs)
         else:
-            return self.instance_type(**kwargs)
+            return cls.instance_type(**kwargs)
 
     @classmethod
     def auto_hook(

@@ -26,6 +26,7 @@ class BuildableConfig[InstanceT](Config):
         self,
         *,
         pass_subclasses: tuple[type[Config], ...] = (),
+        build_subclasses: tuple[type[Config], ...] = (),
     ) -> dict[str, Any]:
         """
         Dump configuration data, aliasing and/or excluding certain fields.
@@ -39,6 +40,9 @@ class BuildableConfig[InstanceT](Config):
             pass_subclasses: Any field values that are instances of these classes
                 will pass through serialization unchanged, i.e. they will not be
                 converted into plain data.
+            build_subclasses: Any field values that are instances of these classes
+                will be converted into built instances, instead of being dumped to
+                configuration data.
 
         Returns:
             Dictionary that does not contain items for fields that were annotated
@@ -55,9 +59,19 @@ class BuildableConfig[InstanceT](Config):
             name
             for name in cls.model_fields
             if isinstance(getattr(self, name), pass_subclasses)
+            and name not in exclude
         }
-        data = self.model_dump(by_alias=True, exclude=exclude | passthrough)
-        data.update({name: getattr(self, name) for name in passthrough - exclude})
+        build = {
+            name
+            for name in cls.model_fields
+            if isinstance(getattr(self, name), build_subclasses)
+            and name not in exclude
+        }
+        data = self.model_dump(by_alias=True, exclude=exclude | passthrough | build)
+        data.update({name: getattr(self, name) for name in passthrough})
+        for name in build:
+            data[name] = getattr(self, name).build_instance()
+
         return data
 
     def build_instance(self) -> InstanceT:
