@@ -15,7 +15,7 @@ from jadzia.core.validation.union import UnionDiscriminator, UnionSerializer
 
 class Constant(ScheduleConfig):
     """
-    Configuration for [optax.constant_schedule][].
+    Configuration for [optax.schedules.constant_schedule][].
 
     Attributes:
         value: Value to be held constant.
@@ -28,7 +28,7 @@ class Constant(ScheduleConfig):
 
 class CosineDecay(ScheduleConfig):
     r"""
-    Configuration for [optax.cosine_decay_schedule][].
+    Configuration for [optax.schedules.cosine_decay_schedule][].
 
     Attributes:
         init_value: $I$, Initial value of the learning rate.
