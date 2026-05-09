@@ -18,9 +18,9 @@ class MAE(eqx.Module):
             y: $(\dots)$, Reference values.
 
         Returns:
-            $()$, Mean-reduced loss function value.
+            $(\dots)$, Unreduced loss function value.
         """
-        return jnp.abs(yhat - y).mean()
+        return jnp.abs(yhat - y)
 
 
 class MSE(eqx.Module):
@@ -35,9 +35,9 @@ class MSE(eqx.Module):
             y: $(\dots)$, Reference values.
 
         Returns:
-            $()$, Mean-reduced loss function value.
+            $(\dots)$, Unreduced loss function value.
         """
-        return jnp.square(yhat - y).mean()
+        return jnp.square(yhat - y)
 
 
 class Huber(eqx.Module):
@@ -63,14 +63,13 @@ class Huber(eqx.Module):
             y: $(\dots)$, Reference values.
 
         Returns:
-            $()$, Mean-reduced loss function value.
+            $(\dots)$, Unreduced loss function value.
         """
         error = yhat - y
         abs_error = jnp.abs(error)
         quadratic = jnp.minimum(abs_error, self.delta)
         linear = abs_error - quadratic
-        loss = 0.5 * quadratic**2 + self.delta * linear
-        return loss.mean()
+        return 0.5 * quadratic**2 + self.delta * linear
 
 
 __all__ = ["MAE", "MSE", "Huber"]

@@ -8,10 +8,18 @@ import equinox as eqx
 from pydantic import PositiveFloat, Tag
 
 # Dax
+import jadzia.nn.loss.direct as dl
 import jadzia.nn.loss.regression as rl
-from jadzia.core.validation.loss import SimpleLoss
+from jadzia.core.validation.loss import GeneralLoss, SimpleLoss
 from jadzia.core.validation.module import ModuleSignature
 from jadzia.core.validation.union import UnionDiscriminator, UnionSerializer
+
+
+class Direct(GeneralLoss):
+    """Configuration for [jadzia.nn.loss.direct.Direct][]."""
+
+    instance_type: ClassVar[type[eqx.Module]] = dl.Direct
+    instance_call: ClassVar[ModuleSignature] = ModuleSignature.from_type(dl.Direct)
 
 
 class MAE(SimpleLoss):
@@ -43,7 +51,8 @@ class Huber(SimpleLoss):
 
 
 type LossFunction = Annotated[
-    Annotated[MAE, Tag("MAE")]
+    Annotated[Direct, Tag("Direct")]
+    | Annotated[MAE, Tag("MAE")]
     | Annotated[MSE, Tag("MSE")]
     | Annotated[Huber, Tag("Huber")],
     UnionDiscriminator(),

@@ -22,12 +22,12 @@ def scalar_inputs():
 def test_mae(scalar_inputs):
     """The mean absolute error loss produces reasonable values and gradients."""
     loss_fn = MAE()
-    grad_fn = jax.grad(loss_fn)
+    grad_fn = jax.grad(lambda yhat, y: loss_fn(yhat, y).mean())
 
     (yhat, y) = scalar_inputs
     loss = loss_fn(yhat, y)
-    assert loss.shape == ()
-    assert jnp.isfinite(loss)
+    assert loss.shape == yhat.shape
+    assert jnp.isfinite(loss).all()
 
     grad = grad_fn(yhat, y)
     assert grad.shape == yhat.shape
@@ -37,12 +37,12 @@ def test_mae(scalar_inputs):
 def test_mse(scalar_inputs):
     """The mean squared error loss products reasonable values and gradients."""
     loss_fn = MSE()
-    grad_fn = jax.grad(loss_fn)
+    grad_fn = jax.grad(lambda yhat, y: loss_fn(yhat, y).mean())
 
     (yhat, y) = scalar_inputs
     loss = loss_fn(yhat, y)
-    assert loss.shape == ()
-    assert jnp.isfinite(loss)
+    assert loss.shape == yhat.shape
+    assert jnp.isfinite(loss).all()
 
     grad = grad_fn(yhat, y)
     assert grad.shape == yhat.shape
@@ -53,12 +53,12 @@ def test_mse(scalar_inputs):
 def test_huber(scalar_inputs, delta):
     """The huber loss products reasonable values and gradients."""
     loss_fn = Huber(delta)
-    grad_fn = jax.grad(loss_fn)
+    grad_fn = jax.grad(lambda yhat, y: loss_fn(yhat, y).mean())
 
     (yhat, y) = scalar_inputs
     loss = loss_fn(yhat, y)
-    assert loss.shape == ()
-    assert jnp.isfinite(loss)
+    assert loss.shape == yhat.shape
+    assert jnp.isfinite(loss).all()
 
     grad = grad_fn(yhat, y)
     assert grad.shape == yhat.shape
