@@ -49,9 +49,10 @@ def test_mse(scalar_inputs):
     assert jnp.isfinite(grad).all()
 
 
-def test_huber(scalar_inputs):
+@pytest.mark.parametrize("delta", [0.1, 1.0, 10.0])
+def test_huber(scalar_inputs, delta):
     """The huber loss products reasonable values and gradients."""
-    loss_fn = Huber()
+    loss_fn = Huber(delta)
     grad_fn = jax.grad(loss_fn)
 
     (yhat, y) = scalar_inputs
