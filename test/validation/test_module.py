@@ -41,9 +41,10 @@ class TupleOutput(eqx.Module):
     class ReturnType(NamedTuple):
         foo: jax.Array
         bar: jax.Array
+        state: eqx.nn.State
 
-    def __call__(self, x: jax.Array, y: jax.Array) -> ReturnType:
-        return self.ReturnType(x + y, x - y)
+    def __call__(self, x: jax.Array, y: jax.Array, state: eqx.nn.State) -> ReturnType:
+        return self.ReturnType(x + y, x - y, state)
 
 
 def test_input_types():
@@ -55,6 +56,7 @@ def test_input_types():
     assert config_cls.instance_call.inputs_pos_or_kw == ("y",)
     assert config_cls.instance_call.inputs_kw_only == ("z",)
     assert config_cls.instance_call.outputs == ("output",)
+    assert config_cls.instance_call.requires_state is False
     assert config_cls.requires_key is True
 
     config = config_cls(n=8)
@@ -82,6 +84,7 @@ def test_single_output():
     assert config_cls.instance_call.inputs_pos_or_kw == ("x",)
     assert config_cls.instance_call.inputs_kw_only == ()
     assert config_cls.instance_call.outputs == ("output",)
+    assert config_cls.instance_call.requires_state is False
     assert config_cls.requires_key is False
 
     config = config_cls()
@@ -106,6 +109,7 @@ def test_dict_output():
     assert config_cls.instance_call.inputs_pos_or_kw == ("x", "y")
     assert config_cls.instance_call.inputs_kw_only == ()
     assert config_cls.instance_call.outputs == ("hello", "world")
+    assert config_cls.instance_call.requires_state is False
     assert config_cls.requires_key is False
 
     config = config_cls()
@@ -128,6 +132,7 @@ def test_tuple_output():
     assert config_cls.instance_call.inputs_pos_or_kw == ("x", "y")
     assert config_cls.instance_call.inputs_kw_only == ()
     assert config_cls.instance_call.outputs == ("foo", "bar")
+    assert config_cls.instance_call.requires_state is True
     assert config_cls.requires_key is False
 
     config = config_cls()
@@ -136,10 +141,11 @@ def test_tuple_output():
 
     x = jax.numpy.linspace(0, 1, 8)
     y = jax.numpy.linspace(1, 0, 8)
-    out = module(x, y)
+    out = module(x, y, None)
     assert isinstance(out, tuple)
     assert out.foo.shape == (8,)
     assert out.bar.shape == (8,)
+    assert out.state is None
 
 
 def test_build_with_state():

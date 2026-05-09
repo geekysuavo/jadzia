@@ -29,6 +29,7 @@ class ModuleSignature(Config):
         inputs_kw_only: Names of input parameters that must be passed by keyword.
         outputs: Names of output values, or `output` when the callable returns
             a single output.
+        requires_state: Whether the module is stateful.
     """
 
     inputs_with_defaults: tuple[str, ...]
@@ -36,6 +37,7 @@ class ModuleSignature(Config):
     inputs_pos_or_kw: tuple[str, ...]
     inputs_kw_only: tuple[str, ...]
     outputs: tuple[str, ...]
+    requires_state: bool
 
     @classmethod
     def from_type(cls, module_type: type[eqx.Module]) -> Self:
@@ -49,12 +51,18 @@ class ModuleSignature(Config):
             Module call method signature.
         """
         names = inspect_callable(module_type.__call__)
+        requires_state = (
+            _STATE in names.inputs_pos_only
+            or _STATE in names.inputs_pos_or_kw
+            or _STATE in names.inputs_kw_only
+        )
         return cls(
             inputs_with_defaults=cls._filter_state(names.inputs_with_defaults),
             inputs_pos_only=cls._filter_state(names.inputs_pos_only),
             inputs_pos_or_kw=cls._filter_state(names.inputs_pos_or_kw),
             inputs_kw_only=cls._filter_state(names.inputs_kw_only),
-            outputs=names.outputs,
+            outputs=cls._filter_state(names.outputs),
+            requires_state=requires_state,
         )
 
     @staticmethod
