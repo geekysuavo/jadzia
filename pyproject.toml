@@ -5,14 +5,14 @@ description = "A symbiosis of Pydantic and JAX"
 readme = "README.md"
 requires-python = ">=3.12,<3.14"
 dependencies = [
-    "equinox>=0.13.7",
+    "equinox>=0.13.8",
     "grain>=0.2.16",
     "jax>=0.10.0",
     "msgpack>=1.1.2",
     "numpy>=2.4.4",
     "optax>=0.2.8",
     "polars>=1.40.1",
-    "pydantic>=2.13.3",
+    "pydantic>=2.13.4",
     "pyyaml>=6.0.3",
 ]
 
@@ -30,7 +30,7 @@ test = [
     "pytest>=9.0.3",
     "pytest-cov>=7.1.0",
     "ruff>=0.15.12",
-    "ty>=0.0.33",
+    "ty>=0.0.34",
 ]
 
 [tool.uv]
