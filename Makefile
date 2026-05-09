@@ -17,5 +17,5 @@ doc:
 	uv run --group doc mkdocs serve
 
 clean:
-	find jadzia test -type d -name __pycache__ -exec rm -rf {} \;
+	find jadzia test -type d -name __pycache__ -exec rm -r {} \; || true
 	rm -rf jadzia.egg-info
