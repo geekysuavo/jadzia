@@ -2,7 +2,7 @@
 
 # Standard
 from collections.abc import Callable
-from typing import Annotated, ClassVar, Self, cast
+from typing import Annotated, Any, ClassVar, Self, cast
 
 # Third party
 import equinox as eqx
@@ -45,8 +45,18 @@ class CompositeLoss(LossConfig):
         all_names = (func.reference_names for func in self.functions.values())
         return tuple(sorted(set().union(*all_names)))
 
-    def build_instance(self) -> eqx.Module:  # ty: ignore[invalid-method-override]
-        """Build an instance based on this configuration."""
+    def model_dump_for_instance(
+        self,
+        *,
+        pass_subclasses: tuple[type, ...] = (),
+        build_subclasses: tuple[type, ...] = (),
+    ) -> dict[str, Any]:
+        """
+        Dump configuration data.
+
+        Note:
+            The `pass_subclasses` and `build_subclasses` arguments are ignored.
+        """
         terms = tuple(
             CompositeLossTerm(
                 weight=weight,
@@ -56,7 +66,7 @@ class CompositeLoss(LossConfig):
             )
             for name, weight in self.terms.items()
         )
-        return CompositeLossImpl(terms)
+        return {"terms": terms}
 
     @model_validator(mode="after")
     def _validate_functions_and_terms(self) -> Self:

@@ -111,13 +111,13 @@ class ModuleConfig(BuildableConfig[eqx.Module]):
         Returns:
             Newly built module instance, with an optional initial state.
         """
-        kwargs = self.model_dump_for_instance(pass_subclasses=(ModuleConfig,))
-        name = self.instance_type.__name__
         cls = type(self)
+        name = cls.instance_type.__name__
+        kwargs = self.model_dump_for_instance(pass_subclasses=(ModuleConfig,))
 
-        if cls.requires_key and key is None:
+        if self.requires_key and key is None:
             raise ValueError(f"module {name} requires a key")
-        elif not cls.requires_key and key is not None:
+        elif not self.requires_key and key is not None:
             raise ValueError(f"module {name} does not require a key")
         elif key is not None:
             kwargs[_KEY] = key
