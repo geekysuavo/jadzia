@@ -10,7 +10,8 @@ from pydantic import Field, PositiveInt, Tag
 # Dax
 import jadzia.nn.fission as fission
 import jadzia.nn.fusion as fusion
-from jadzia.core.validation.block import FissionBlock, FusionBlock
+import jadzia.nn.linear as linear
+from jadzia.core.validation.block import FissionBlock, FusionBlock, SimpleBlock
 from jadzia.core.validation.module import ModuleSignature
 from jadzia.core.validation.union import UnionDiscriminator, UnionSerializer
 
@@ -65,12 +66,25 @@ class SumFusion(FusionBlock):
     )
 
 
+class Linear(SimpleBlock):
+    """Configuration for [jadzia.nn.linear.Linear][]."""
+
+    instance_type: ClassVar[type[eqx.Module]] = linear.Linear
+    instance_call: ClassVar[ModuleSignature] = ModuleSignature.from_type(linear.Linear)
+    requires_key: ClassVar[bool] = True
+
+    num_input_features: PositiveInt
+    num_output_features: PositiveInt
+    bias: bool = True
+
+
 type Block = Annotated[
     Annotated[SplitFission, Tag("SplitFission")]
     | Annotated[UnstackFission, Tag("UnstackFission")]
     | Annotated[SumFusion, Tag("SumFusion")]
     | Annotated[MeanFusion, Tag("MeanFusion")]
-    | Annotated[MaxFusion, Tag("MaxFusion")],
+    | Annotated[MaxFusion, Tag("MaxFusion")]
+    | Annotated[Linear, Tag("Linear")],
     UnionDiscriminator(),
     UnionSerializer(),
 ]
