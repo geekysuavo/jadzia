@@ -12,7 +12,7 @@ from jadzia.config.model import CompositeModel
 @pytest.mark.parametrize("dag", [True, False])
 @pytest.mark.parametrize("unused_block", [False, True])
 @pytest.mark.parametrize("missing_input", [False, True])
-def test_composite_model_config(missing_input, unused_block, dag):
+def test_model_config(missing_input, unused_block, dag):
     """The composite model configuration validates and builds a module correctly."""
     config_data = {
         "outputs": {
@@ -95,7 +95,7 @@ def test_composite_model_config(missing_input, unused_block, dag):
     assert isinstance(state, eqx.nn.State)
 
 
-def test_composite_model_without_config():
+def test_model_without_key():
     """The composite model only accepts a key when its modules require one."""
     config = CompositeModel(
         outputs={"yhat": "split.first", "zhat": "split.second"},
