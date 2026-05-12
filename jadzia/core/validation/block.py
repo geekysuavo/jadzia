@@ -2,84 +2,15 @@
 
 # Standard
 from abc import ABC, abstractmethod
-from enum import StrEnum
-from typing import Annotated, NamedTuple, Self
+from typing import Annotated, Self
 
 # Third party
-from pydantic import BeforeValidator, PlainSerializer, PositiveInt, model_validator
+from pydantic import PositiveInt, model_validator
 
 # Dax
+from jadzia.core.dependency.identifier import Identifier, IdentifierStr
 from jadzia.core.validation.buildable import Exclude
 from jadzia.core.validation.module import ModuleConfig
-
-
-class SpecialBlocks(StrEnum):
-    """
-    Enumeration of specially reserved block names.
-
-    - `batch`: Data taken from the input minibatch.
-    """
-
-    BATCH = "batch"
-
-
-class BlockOutput(NamedTuple):
-    """
-    A building block name and the name of its output, separated by a period.
-
-    For example, a block named `blk` that returns two outputs `foo` and `bar`
-    will have output names `blk.foo` and `blk.bar`.
-
-    Attributes:
-        block: Name of the block that produced the output.
-        output: Name of the output produced by the block.
-    """
-
-    block: str
-    output: str
-
-    def __str__(self) -> str:
-        """Return a string representation of this instance."""
-        return f"{self.block}.{self.output}"
-
-    @property
-    def is_batch(self) -> bool:
-        """Whether the output is from the special `batch` block."""
-        return self.block == SpecialBlocks.BATCH
-
-    @classmethod
-    def from_outputs(cls, name: str, block: "BlockConfig") -> tuple[Self, ...]:
-        """
-        Build a tuple of block outputs from a named block.
-
-        Args:
-            name: Name of the block, used as the prefix of return values.
-            block: Block that returns outputs, used as the suffixes of returned values.
-
-        Returns:
-            Tuple of block outputs.
-        """
-        return tuple(cls(name, output) for output in block.output_names)
-
-    @classmethod
-    def from_string(cls, value: str) -> Self:
-        """Convert strings to block outputs."""
-        if not isinstance(value, str):
-            raise TypeError(f"expected str, got {type(value).__name__}")
-
-        parts = value.split(".")
-        if len(parts) != 2:
-            raise ValueError(f"expected 'block.output' format, got {value!r}")
-
-        return cls(*parts)
-
-
-type BlockOutputStr = Annotated[
-    BlockOutput,
-    BeforeValidator(BlockOutput.from_string),
-    PlainSerializer(BlockOutput.__str__),
-]
-"""Type annotation for block outputs that may be coerced from strings."""
 
 
 class BlockConfig(ModuleConfig, ABC):
@@ -87,7 +18,7 @@ class BlockConfig(ModuleConfig, ABC):
 
     @property
     @abstractmethod
-    def input_names(self) -> tuple[BlockOutput, ...]:
+    def input_names(self) -> tuple[Identifier, ...]:
         """Names of other block outputs that are passed as inputs to this block."""
 
     @property
@@ -104,10 +35,10 @@ class SimpleBlock(BlockConfig):
         input: Name of the input to the block in `block.output` format.
     """
 
-    input: Annotated[BlockOutputStr, Exclude]
+    input: Annotated[IdentifierStr, Exclude]
 
     @property
-    def input_names(self) -> tuple[BlockOutput, ...]:
+    def input_names(self) -> tuple[Identifier, ...]:
         """Names of other block outputs that are passed as inputs to this block."""
         return (self.input,)
 
@@ -137,10 +68,10 @@ class GeneralBlock(BlockConfig):
             in `block.output` format.
     """
 
-    inputs: Annotated[dict[str, BlockOutputStr], Exclude]
+    inputs: Annotated[dict[str, IdentifierStr], Exclude]
 
     @property
-    def input_names(self) -> tuple[BlockOutput, ...]:
+    def input_names(self) -> tuple[Identifier, ...]:
         """Names of other block outputs that are passed as inputs to this block."""
         original_names = self.instance_call.inputs_pos_or_kw
         return tuple(self.inputs[name] for name in original_names)
@@ -182,10 +113,10 @@ class FusionBlock(BlockConfig):
         inputs: List of input names in `block.output` format.
     """
 
-    inputs: Annotated[list[BlockOutputStr], Exclude]
+    inputs: Annotated[list[IdentifierStr], Exclude]
 
     @property
-    def input_names(self) -> tuple[BlockOutput, ...]:
+    def input_names(self) -> tuple[Identifier, ...]:
         """Names of other block outputs that are passed as inputs to this block."""
         return tuple(self.inputs)
 
@@ -246,12 +177,4 @@ class FissionBlock(SimpleBlock):
             return self
 
 
-__all__ = [
-    "BlockConfig",
-    "BlockOutput",
-    "BlockOutputStr",
-    "FissionBlock",
-    "FusionBlock",
-    "GeneralBlock",
-    "SimpleBlock",
-]
+__all__ = ["BlockConfig", "FissionBlock", "FusionBlock", "GeneralBlock", "SimpleBlock"]

@@ -9,7 +9,7 @@ import equinox as eqx
 import jax
 
 # Dax
-from jadzia.core.validation.block import BlockOutput, SpecialBlocks
+from jadzia.core.dependency.identifier import Identifier, SpecialNodes
 
 
 class CompositeModelBlock(NamedTuple):
@@ -23,7 +23,7 @@ class CompositeModelBlock(NamedTuple):
     """
 
     name: str
-    input_names: tuple[BlockOutput, ...]
+    input_names: tuple[Identifier, ...]
     output_names: tuple[str, ...]
 
 
@@ -51,7 +51,7 @@ class CompositeModel(eqx.Module):
 
     modules: dict[str, eqx.Module]
     blocks: tuple[CompositeModelBlock, ...]
-    outputs: tuple[tuple[str, BlockOutput], ...]
+    outputs: tuple[tuple[str, Identifier], ...]
 
     def __call__(self, inputs: dict[str, jax.Array], state: eqx.nn.State) -> ReturnType:
         """
@@ -84,7 +84,7 @@ class CompositeModel(eqx.Module):
         return self.ReturnType(outputs, state)
 
     @classmethod
-    def _init(cls, **outputs: jax.Array) -> dict[BlockOutput, jax.Array]:
+    def _init(cls, **outputs: jax.Array) -> dict[Identifier, jax.Array]:
         """
         Initialize a dictionary of temporary arrays from model inputs.
 
@@ -94,13 +94,13 @@ class CompositeModel(eqx.Module):
         Returns:
             New dictionary of arrays.
         """
-        arrays: dict[BlockOutput, jax.Array] = {}
-        cls._update(arrays, name=SpecialBlocks.BATCH, **outputs)
+        arrays: dict[Identifier, jax.Array] = {}
+        cls._update(arrays, name=SpecialNodes.BATCH, **outputs)
         return arrays
 
     @staticmethod
     def _update(
-        arrays: dict[BlockOutput, jax.Array],
+        arrays: dict[Identifier, jax.Array],
         *,
         name: str,
         **outputs: jax.Array,
@@ -113,7 +113,7 @@ class CompositeModel(eqx.Module):
             name: Name of the new block.
             outputs: Keyword arguments of the block outputs.
         """
-        update = {BlockOutput(name, key): value for key, value in outputs.items()}
+        update = {Identifier(name, key): value for key, value in outputs.items()}
         arrays.update(update)
 
 

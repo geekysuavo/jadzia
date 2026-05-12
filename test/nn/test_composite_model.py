@@ -7,7 +7,7 @@ import jax.numpy as jnp
 import jax.random as jr
 
 # Dax
-from jadzia.core.validation.block import BlockOutput, SpecialBlocks
+from jadzia.core.dependency.identifier import Identifier, SpecialNodes
 from jadzia.nn.model import CompositeModel, CompositeModelBlock
 
 
@@ -24,19 +24,19 @@ def test_composite_model():
     blocks = (
         CompositeModelBlock(
             name="proj",
-            input_names=(BlockOutput(SpecialBlocks.BATCH, "x"),),
+            input_names=(Identifier(SpecialNodes.BATCH, "x"),),
             output_names=("output",),
         ),
         CompositeModelBlock(
             name="norm",
-            input_names=(BlockOutput(SpecialBlocks.BATCH, "y"),),
+            input_names=(Identifier(SpecialNodes.BATCH, "y"),),
             output_names=("output",),
         ),
     )
 
     outputs = (
-        ("x_proj", BlockOutput("proj", "output")),
-        ("y_norm", BlockOutput("norm", "output")),
+        ("x_proj", Identifier("proj", "output")),
+        ("y_norm", Identifier("norm", "output")),
     )
 
     model = CompositeModel(modules, blocks, outputs)

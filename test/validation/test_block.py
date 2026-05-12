@@ -9,8 +9,8 @@ import jax
 import pytest
 
 # Dax
+from jadzia.core.dependency.identifier import Identifier
 from jadzia.core.validation.block import (
-    BlockOutput,
     FissionBlock,
     FusionBlock,
     GeneralBlock,
@@ -47,44 +47,6 @@ class PositionalOnly(eqx.Module):
         return jax.numpy.sum(arg)
 
 
-def test_block_output_standalone():
-    """Block outputs are converted from strings."""
-    example = BlockOutput.from_string("foo.bar")
-    assert example == BlockOutput("foo", "bar")
-    assert str(example) == "foo.bar"
-    assert example.block == "foo"
-    assert example.output == "bar"
-    assert example.is_batch is False
-
-    from_batch = BlockOutput.from_string("batch.out")
-    assert str(from_batch) == "batch.out"
-    assert from_batch.is_batch is True
-
-    with pytest.raises(TypeError, match="expected str"):
-        BlockOutput.from_string(5)
-
-    with pytest.raises(ValueError, match=r"expected '.*' format"):
-        BlockOutput.from_string("too_few_parts")
-
-    with pytest.raises(ValueError, match=r"expected '.*' format"):
-        BlockOutput.from_string("too.many.parts")
-
-
-def test_block_output_embedded():
-    """Blocks are converted to and from strings during validation."""
-    config_cls = SimpleBlock.auto(Simple)
-
-    config = config_cls(input="ermagherd.out")
-    assert config.input_names == (BlockOutput("ermagherd", "out"),)
-    assert config.output_names == ("output",)
-
-    block_outputs = BlockOutput.from_outputs("blerk", config)
-    assert block_outputs == (BlockOutput("blerk", "output"),)
-
-    with pytest.raises(ValueError, match=r"expected '.*' format"):
-        config_cls(input="berks")
-
-
 def test_general_block():
     """Signature discovery of general blocks produces the expected results."""
     config_cls = GeneralBlock.auto(General)
@@ -92,8 +54,8 @@ def test_general_block():
 
     config = config_cls(inputs={"x": "batch.hello", "y": "batch.world"})
     assert config.input_names == (
-        BlockOutput("batch", "hello"),
-        BlockOutput("batch", "world"),
+        Identifier("batch", "hello"),
+        Identifier("batch", "world"),
     )
     assert config.output_names == ("foo", "bar")
 
@@ -116,7 +78,7 @@ def test_simple_block():
     assert issubclass(config_cls, SimpleBlock)
 
     config = config_cls(input="blk.pred")
-    assert config.input_names == (BlockOutput("blk", "pred"),)
+    assert config.input_names == (Identifier("blk", "pred"),)
     assert config.output_names == ("output",)
 
     obj = config.build_instance()
@@ -133,9 +95,9 @@ def test_fusion_block():
 
     config = config_cls(inputs=("mlp.out", "agg.mean", "agg.var"))
     assert config.input_names == (
-        BlockOutput("mlp", "out"),
-        BlockOutput("agg", "mean"),
-        BlockOutput("agg", "var"),
+        Identifier("mlp", "out"),
+        Identifier("agg", "mean"),
+        Identifier("agg", "var"),
     )
     assert config.output_names == ("output",)
 
@@ -146,11 +108,11 @@ def test_fission_block():
     assert issubclass(config_cls, FissionBlock)
 
     config = config_cls(input="mlp.out", outputs=("foo", "bar"))
-    assert config.input_names == (BlockOutput("mlp", "out"),)
+    assert config.input_names == (Identifier("mlp", "out"),)
     assert config.output_names == ("foo", "bar")
 
     config = config_cls(input="mlp.out", num_outputs=3)
-    assert config.input_names == (BlockOutput("mlp", "out"),)
+    assert config.input_names == (Identifier("mlp", "out"),)
     assert config.output_names == ("output1", "output2", "output3")
 
 

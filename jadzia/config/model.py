@@ -12,7 +12,8 @@ from pydantic import Field, model_validator
 # Dax
 from jadzia.config.block import Block
 from jadzia.core.dependency.graph import Graph
-from jadzia.core.validation.block import BlockConfig, BlockOutput, BlockOutputStr
+from jadzia.core.dependency.identifier import Identifier, IdentifierStr
+from jadzia.core.validation.block import BlockConfig
 from jadzia.core.validation.module import ModuleSignature
 from jadzia.nn.model import CompositeModel as CompositeModelImpl
 from jadzia.nn.model import CompositeModelBlock
@@ -32,17 +33,17 @@ class CompositeModel(BlockConfig):
         CompositeModelImpl
     )
 
-    outputs: Annotated[dict[str, BlockOutputStr], Field(min_length=1)]
+    outputs: Annotated[dict[str, IdentifierStr], Field(min_length=1)]
     blocks: dict[str, Block]
 
     @property
     def input_names(self) -> tuple[str, ...]:
         """Names of batch entries that are passed as inputs to the model."""
 
-        def is_batch(output: BlockOutput) -> bool:
+        def is_batch(output: Identifier) -> bool:
             return output.is_batch
 
-        def to_str(output: BlockOutput) -> str:
+        def to_str(output: Identifier) -> str:
             return output.output
 
         block_inputs = (block.input_names for block in self.blocks.values())
@@ -123,7 +124,7 @@ class CompositeModel(BlockConfig):
     def _block_order(self) -> tuple[str, ...]:
         """Determine the execution order of each model building block."""
         deps = {
-            name: {dep.block for dep in block.input_names}
+            name: {dep.node for dep in block.input_names}
             for name, block in self.blocks.items()
         }
         return Graph(deps).sort_nodes()
@@ -132,7 +133,7 @@ class CompositeModel(BlockConfig):
     def _ensure_valid_model(self) -> Self:
         """Ensure that the model configuration is valid."""
         # condition: all non-batch block inputs are satisfied by other blocks.
-        def not_batch(output: BlockOutput) -> bool:
+        def not_batch(output: Identifier) -> bool:
             return not output.is_batch
 
         all_block_inputs = {
@@ -140,9 +141,9 @@ class CompositeModel(BlockConfig):
             for name, block in self.blocks.items()
         }
 
-        all_block_outputs: set[BlockOutput] = set()
+        all_block_outputs: set[Identifier] = set()
         for name, block in self.blocks.items():
-            all_block_outputs.update(BlockOutput.from_outputs(name, block))
+            all_block_outputs.update(Identifier.from_outputs(name, block))
 
         missing_block_inputs = {
             name: block_inputs - all_block_outputs
@@ -168,10 +169,10 @@ class CompositeModel(BlockConfig):
         built_block_names = set()
         while outputs_to_build:
             output = outputs_to_build.pop()
-            if output.is_batch or output.block in built_block_names:
+            if output.is_batch or output.node in built_block_names:
                 continue
 
-            name = output.block
+            name = output.node
             block = self.blocks[name]
 
             built_block_names.add(name)
