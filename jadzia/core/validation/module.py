@@ -10,6 +10,7 @@ import jax
 # Dax
 from jadzia.core.validation.base import Config
 from jadzia.core.validation.buildable import BuildableConfig
+from jadzia.core.validation.function import FunctionConfig
 from jadzia.core.validation.inspect import inspect_callable
 
 # reserved parameter names.
@@ -113,7 +114,10 @@ class ModuleConfig(BuildableConfig[eqx.Module]):
         """
         cls = type(self)
         name = cls.instance_type.__name__
-        kwargs = self.model_dump_for_instance(pass_subclasses=(ModuleConfig,))
+        kwargs = self.model_dump_for_instance(
+            pass_subclasses=(ModuleConfig,),
+            build_subclasses=(FunctionConfig,),
+        )
 
         if self.requires_key and key is None:
             raise ValueError(f"module {name} requires a key")
