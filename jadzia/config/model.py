@@ -132,6 +132,7 @@ class CompositeModel(BlockConfig):
     @model_validator(mode="after")
     def _ensure_valid_model(self) -> Self:
         """Ensure that the model configuration is valid."""
+
         # condition: all non-batch block inputs are satisfied by other blocks.
         def not_batch(output: Identifier) -> bool:
             return not output.is_batch

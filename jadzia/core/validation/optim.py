@@ -11,7 +11,10 @@ from optax import GradientTransformation, Schedule
 from jadzia.core.validation.buildable import BuildableConfig
 
 type OptimizerInstanceType = Callable[..., GradientTransformation]
+"""Function that returns an optimizer."""
+
 type ScheduleInstanceType = Callable[..., Schedule]
+"""Function that returns a schedule."""
 
 
 class OptimizerConfig(BuildableConfig[GradientTransformation]):
