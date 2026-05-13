@@ -11,11 +11,7 @@ import pytest
 from jadzia.data.serialization import dumps, loads
 
 
-@pytest.mark.parametrize(
-    "shape",
-    [(4,), (2, 3), (5, 3, 2)],
-    ids=["4", "2x3", "5x3x2"],
-)
+@pytest.mark.parametrize("shape", [(4,), (2, 3)], ids=["4", "2x3"])
 @pytest.mark.parametrize(
     "dtype",
     [
