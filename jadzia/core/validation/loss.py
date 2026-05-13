@@ -41,6 +41,12 @@ class SimpleLoss(LossConfig):
     """
     Loss function taking a single prediction-reference pair.
 
+    Modules built by this loss must have a single positional-only argument
+    and a single positional-or-keyword argument, like so:
+    ```python
+    def __call__(self, yhat: Array, /, y: Array) -> Array:
+    ```
+
     Attributes:
         input: Name of the input to the loss function.
     """
@@ -77,6 +83,13 @@ class GeneralLoss(LossConfig):
     """
     Loss function taking multiple prediction and/or reference inputs.
 
+    Modules built by this loss may have one or more positional-only arguments
+    and must have one or more positional-or-keyword arguments, like so:
+    ```python
+    def __call__(self, *yhats: Array) -> Array:
+    def __call__(self, *yhats: Array, /, *ys: Array) -> Array:
+    ```
+
     Attributes:
         inputs: Mapping from module call method argument names to input names.
     """
@@ -86,13 +99,21 @@ class GeneralLoss(LossConfig):
     @property
     def prediction_names(self) -> tuple[str, ...]:
         """Names of predicted values passed as inputs to this loss."""
-        original_names = self.instance_call.inputs_pos_only
+        if len(self.instance_call.inputs_pos_only):
+            original_names = self.instance_call.inputs_pos_only
+        else:
+            original_names = self.instance_call.inputs_pos_or_kw
+
         return tuple(self.inputs[name] for name in original_names)
 
     @property
     def reference_names(self) -> tuple[str, ...]:
         """Names of reference values passed as inputs to this loss."""
-        original_names = self.instance_call.inputs_pos_or_kw
+        if len(self.instance_call.inputs_pos_only):
+            original_names = self.instance_call.inputs_pos_or_kw
+        else:
+            original_names = ()
+
         return tuple(self.inputs[name] for name in original_names)
 
     @model_validator(mode="after")

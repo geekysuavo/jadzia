@@ -22,12 +22,17 @@ class General(eqx.Module):
         z: jax.Array,
         w: jax.Array,
     ) -> jax.Array:
-        return (x - z)**2 + jnp.abs(y - w)
+        return jnp.square(x - z) + jnp.abs(y - w)
 
 
 class Simple(eqx.Module):
     def __call__(self, x: jax.Array, /, y: jax.Array) -> jax.Array:
-        return (x - y)**2
+        return jnp.square(x - y)
+
+
+class Markerless(eqx.Module):
+    def __call__(self, x: jax.Array, y: jax.Array) -> jax.Array:
+        return jnp.square(x - y)
 
 
 class InvalidOutput(eqx.Module):
@@ -35,8 +40,24 @@ class InvalidOutput(eqx.Module):
         ell2: jax.Array
         ell1: jax.Array
 
-    def forward(self, x: jax.Array, /, y: jax.Array) -> ReturnType:
+    def __call__(self, x: jax.Array, /, y: jax.Array) -> ReturnType:
         return self.ReturnType(x + y, x - y)
+
+
+def test_simple_loss():
+    """Signature discovery of simple losses produces the expected results."""
+    config_cls = SimpleLoss.auto(Simple)
+    assert issubclass(config_cls, SimpleLoss)
+
+    config = config_cls(input="foobar")
+    assert config.prediction_names == ("foobar",)
+    assert config.reference_names == ("foobar",)
+
+    obj = config.build_instance()
+    assert isinstance(obj, Simple)
+
+    with pytest.raises(ValueError, match="Field required"):
+        config_cls()
 
 
 def test_general_loss():
@@ -61,20 +82,17 @@ def test_general_loss():
         config_cls(inputs={"x": "X", "y": "Y", "z": "Z", "w": "W", "extra": "E"})
 
 
-def test_simple_loss():
-    """Signature discovery of simple losses produces the expected results."""
-    config_cls = SimpleLoss.auto(Simple)
-    assert issubclass(config_cls, SimpleLoss)
+def test_markerless_loss():
+    """Signature discovery of markerless losses produces the expected results."""
+    config_cls = GeneralLoss.auto(Markerless)
+    assert issubclass(config_cls, GeneralLoss)
 
-    config = config_cls(input="foobar")
-    assert config.prediction_names == ("foobar",)
-    assert config.reference_names == ("foobar",)
+    config = config_cls(inputs={"x": "Xx", "y": "Yy"})
+    assert config.prediction_names == ("Xx", "Yy")
+    assert config.reference_names == ()
 
     obj = config.build_instance()
-    assert isinstance(obj, Simple)
-
-    with pytest.raises(ValueError, match="Field required"):
-        config_cls()
+    assert isinstance(obj, Markerless)
 
 
 def test_incompatible_signatures_fail():

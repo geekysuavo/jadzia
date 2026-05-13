@@ -8,7 +8,7 @@ import jax
 class Direct(eqx.Module):
     """Direct loss."""
 
-    def __call__(self, prediction: jax.Array, /) -> jax.Array:
+    def __call__(self, prediction: jax.Array) -> jax.Array:
         r"""
         Compute the loss function values.
 
