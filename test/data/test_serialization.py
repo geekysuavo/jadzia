@@ -34,7 +34,7 @@ from jadzia.data.serialization import dumps, loads
         "complex128",
     ],
 )
-def test_ndarray_serialization(dtype, shape):
+def test_ndarray(dtype, shape):
     """Numpy arrays are serialized and deserialized correctly."""
     rng = np.random.default_rng()
     if "int" in dtype:
