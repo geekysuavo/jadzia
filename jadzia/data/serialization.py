@@ -42,9 +42,9 @@ def dumps(obj: Any) -> bytes:
     return msgpack.packb(obj, default=_encode_ndarray)
 
 
-def loads(data: bytes) -> Any:
+def loads(data: bytes | memoryview) -> Any:
     """
-    Deserialize [bytes][] into an object.
+    Deserialize data into an object.
 
     Args:
         data: Data to deserialize.
