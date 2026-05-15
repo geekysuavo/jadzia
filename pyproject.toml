@@ -23,15 +23,15 @@ doc = [
     "mkdocs-gitbook>=0.0.1",
     "mkdocstrings>=1.0.4",
     "mkdocstrings-python>=2.0.3",
-    "pymdown-extensions>=10.21.2",
-    "ruff>=0.15.12",
+    "pymdown-extensions>=10.21.3",
+    "ruff>=0.15.13",
 ]
 test = [
     "pytest>=9.0.3",
     "pytest-cov>=7.1.0",
     "pytest-mock>=3.15.1",
-    "ruff>=0.15.12",
-    "ty>=0.0.34",
+    "ruff>=0.15.13",
+    "ty>=0.0.35",
 ]
 
 [tool.uv]
