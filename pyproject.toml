@@ -8,6 +8,7 @@ dependencies = [
     "equinox>=0.13.8",
     "grain>=0.2.16",
     "jax>=0.10.0",
+    "lmdb>=2.2.0",
     "msgpack>=1.1.2",
     "numpy>=2.4.4",
     "optax>=0.2.8",
