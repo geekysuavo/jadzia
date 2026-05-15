@@ -10,7 +10,7 @@ dependencies = [
     "jax>=0.10.0",
     "lmdb>=2.2.0",
     "msgpack>=1.1.2",
-    "numpy>=2.4.4",
+    "numpy>=2.4.5",
     "optax>=0.2.8",
     "polars>=1.40.1",
     "pydantic>=2.13.4",
@@ -32,7 +32,7 @@ test = [
     "pytest-cov>=7.1.0",
     "pytest-mock>=3.15.1",
     "ruff>=0.15.13",
-    "ty>=0.0.35",
+    "ty>=0.0.36",
 ]
 
 [tool.uv]
