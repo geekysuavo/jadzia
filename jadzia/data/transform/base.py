@@ -167,4 +167,14 @@ class Filter(_Base, grain.transforms.Filter):
         return self._call_impl(element, as_bool=True)
 
 
-__all__ = ["Filter", "Map", "MapWithIndex", "NumpyRandomMap", "RandomMap"]
+type Transformation = Map | MapWithIndex | RandomMap | NumpyRandomMap | Filter
+"""Dataclasses implementing a [grain.transforms.Transformation][]."""
+
+__all__ = [
+    "Filter",
+    "Map",
+    "MapWithIndex",
+    "NumpyRandomMap",
+    "RandomMap",
+    "Transformation",
+]
