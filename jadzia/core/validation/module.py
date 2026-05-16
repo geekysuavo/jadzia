@@ -28,8 +28,8 @@ class ModuleSignature(Config):
         inputs_pos_or_kw: Names of input parameters that may be passed either
             positionally or by keyword.
         inputs_kw_only: Names of input parameters that must be passed by keyword.
-        outputs: Names of output values, or `output` when the callable returns
-            a single output.
+        outputs: Names of output values, or `output` when the module
+            returns a single output.
         requires_state: Whether the module is stateful.
     """
 
