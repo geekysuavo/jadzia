@@ -119,7 +119,7 @@ def test_random_map(key_in, key_out, upper):
 
 @pytest.mark.parametrize("size", [(4,), (2, 3)], ids=["4", "2x3"])
 @pytest.mark.parametrize(("key_in", "key_out"), [("foo", "bar"), ("Bar", "Foo")])
-def test_numpy_random_map(key_in, key_out, size):
+def test_np_random_map(key_in, key_out, size):
     """Random numpy map transformations produce the expected results."""
     transform = InsertRandomArray(input_names=(key_in,), output_names=(key_out,))
     assert isinstance(transform, gt.TfRandomMap)
