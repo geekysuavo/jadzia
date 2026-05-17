@@ -121,9 +121,9 @@ def inspect_callable(fn: Callable, *, method: bool = True) -> CallableSignature:
         outputs = ()  # no output
     elif isinstance(return_type, str):
         raise RuntimeError("string type annotations do not support inspection")
-    elif not isinstance(return_type, str) and issubclass(return_type, tuple):
+    elif hasattr(return_type, "__annotations__") and issubclass(return_type, tuple):
         outputs = tuple(return_type.__annotations__)  # named tuple of outputs
-    elif not isinstance(return_type, str) and issubclass(return_type, dict):
+    elif hasattr(return_type, "__annotations__") and issubclass(return_type, dict):
         outputs = tuple(return_type.__annotations__)  # typed dictionary of outputs
     else:
         outputs = ("output",)  # single output
