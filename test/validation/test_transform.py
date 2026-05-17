@@ -2,7 +2,6 @@
 
 # Standard
 import math
-from dataclasses import dataclass
 from typing import NamedTuple
 
 # Third party
@@ -16,7 +15,6 @@ from jadzia.core.validation.transform import TransformConfig, TransformSignature
 from jadzia.data.transform.base import Map, MapWithIndex, RandomMap
 
 
-@dataclass(frozen=True)
 class Multiply(Map):
     n: PositiveInt
 
@@ -24,13 +22,11 @@ class Multiply(Map):
         return self.n * x
 
 
-@dataclass(frozen=True)
 class Step(MapWithIndex):
     def __call__(self, z: int, *, index: int) -> int:
         return z + index % 4
 
 
-@dataclass(frozen=True)
 class RandomScale(RandomMap):
     loc: float = 0.0
     scale: float = 1.0
@@ -39,7 +35,6 @@ class RandomScale(RandomMap):
         return p * rng.normal(self.loc, self.scale).item()
 
 
-@dataclass(frozen=True)
 class Rotate(Map):
     class ReturnType(NamedTuple):
         arot: float
@@ -54,12 +49,10 @@ class Rotate(Map):
         return self.ReturnType(arot, brot)
 
 
-@dataclass(frozen=True)
 class InvalidIndex(MapWithIndex):
     def __call__(self, index: int) -> int: ...
 
 
-@dataclass(frozen=True)
 class InvalidRng(RandomMap):
     def __call__(self, rng: Generator, /) -> int: ...
 

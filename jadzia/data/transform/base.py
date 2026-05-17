@@ -1,9 +1,9 @@
 """Transformation base classes."""
 
 # Standard
-from abc import ABC, abstractmethod
+from abc import ABCMeta, abstractmethod
 from dataclasses import dataclass
-from typing import Any, Literal, overload
+from typing import Any, Literal, dataclass_transform, overload
 
 # Third party
 import grain
@@ -13,8 +13,16 @@ type Element = dict[str, Any]
 """Expected type of each transformed element."""
 
 
-@dataclass(frozen=True)
-class _Base(ABC):
+@dataclass_transform(frozen_default=True)
+class _BaseMeta(ABCMeta):
+    """Minimal metaclass providing dataclass semantics for transformations."""
+
+    def __new__(cls, name, bases, dct):
+        new_cls = super().__new__(cls, name, bases, dct)
+        return dataclass(new_cls, frozen=True)  # ty: ignore[no-matching-overload]
+
+
+class _Base(metaclass=_BaseMeta):
     """
     Transformation base class.
 
@@ -79,7 +87,6 @@ class _Base(ABC):
         return element_out
 
 
-@dataclass(frozen=True)
 class Map(_Base, grain.transforms.Map):
     """Map transformation base class."""
 
@@ -96,7 +103,6 @@ class Map(_Base, grain.transforms.Map):
         return self._call_impl(element)
 
 
-@dataclass(frozen=True)
 class MapWithIndex(_Base, grain.transforms.MapWithIndex):
     """Indexed map transformation base class."""
 
@@ -114,7 +120,6 @@ class MapWithIndex(_Base, grain.transforms.MapWithIndex):
         return self._call_impl(element, index=index)
 
 
-@dataclass(frozen=True)
 class RandomMap(_Base, grain.transforms.RandomMap):
     """Random map transformation base class."""
 
@@ -132,7 +137,6 @@ class RandomMap(_Base, grain.transforms.RandomMap):
         return self._call_impl(element, rng=rng)
 
 
-@dataclass(frozen=True)
 class NumpyRandomMap(_Base, grain.transforms.TfRandomMap):
     """Random [numpy][] map transformation base class."""
 
@@ -150,7 +154,6 @@ class NumpyRandomMap(_Base, grain.transforms.TfRandomMap):
         return self._call_impl(element, rng=rng)
 
 
-@dataclass(frozen=True)
 class Filter(_Base, grain.transforms.Filter):
     """Filter transformation base class."""
 

@@ -2,7 +2,6 @@
 
 # Standard
 import sys
-from dataclasses import dataclass
 from typing import Any
 
 # Third party
@@ -16,7 +15,6 @@ type Value = bool | float | int | str
 """Expected type of inserted values."""
 
 
-@dataclass(frozen=True)
 class Insert(Map):
     """
     Insert a new value into the example.
@@ -32,7 +30,6 @@ class Insert(Map):
         return self.value
 
 
-@dataclass(frozen=True)
 class InsertCopy(Map):
     """Insert a copy of a value in an example."""
 
@@ -52,7 +49,6 @@ class InsertCopy(Map):
             return source
 
 
-@dataclass(frozen=True)
 class InsertFromSequence(MapWithIndex):
     """
     Insert a new value into the example from a sequence of values.
@@ -80,7 +76,6 @@ class InsertFromSequence(MapWithIndex):
         return self.values[values_index]
 
 
-@dataclass(frozen=True)
 class InsertRandomChoice(RandomMap):
     """
     Insert a new value into the example, randomly sampled from a sequence of values.
@@ -106,7 +101,6 @@ class InsertRandomChoice(RandomMap):
         return rng.choice(self.values, p=self.weights).item()
 
 
-@dataclass(frozen=True)
 class InsertRandomInteger(RandomMap):
     """
     Insert a random integer value into the example.
@@ -132,7 +126,6 @@ class InsertRandomInteger(RandomMap):
         return rng.integers(self.lower, self.upper).item()
 
 
-@dataclass(frozen=True)
 class InsertRandomUniform(RandomMap):
     """
     Insert a random uniform value into the example.

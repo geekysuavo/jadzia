@@ -1,8 +1,5 @@
 """Tests of transformation base classes."""
 
-# Standard
-from dataclasses import dataclass
-
 # Third party
 import grain.transforms as gt
 import numpy as np
@@ -18,7 +15,6 @@ from jadzia.data.transform.base import (
 )
 
 
-@dataclass(frozen=True)
 class InsertInt(Map):
     value: int
 
@@ -26,31 +22,26 @@ class InsertInt(Map):
         return self.value
 
 
-@dataclass(frozen=True)
 class Swap(Map):
     def __call__(self, a: int, b: int) -> tuple[int, int]:
         return (b, a)
 
 
-@dataclass(frozen=True)
 class InsertIndex(MapWithIndex):
     def __call__(self, index: int) -> int:
         return index
 
 
-@dataclass(frozen=True)
 class InsertRandomScalar(RandomMap):
     def __call__(self, upper: int, rng: np.random.Generator) -> int:
         return rng.integers(upper).item()
 
 
-@dataclass(frozen=True)
 class InsertRandomArray(NumpyRandomMap):
     def __call__(self, size: tuple[int, ...], rng: np.random.Generator) -> np.ndarray:
         return rng.normal(size=size)
 
 
-@dataclass(frozen=True)
 class IsEven(Filter):
     def __call__(self, value: int) -> bool:
         return value % 2 == 0
