@@ -51,6 +51,10 @@ def test_tagged_unions():
     with pytest.raises(ValueError, match="Unable to extract tag using discriminator"):
         config_cls.model_validate(invalid_type)
 
+    missing_type = {"ooz": {"hello": "mars"}}
+    with pytest.raises(ValueError, match="Unable to extract tag using discriminator"):
+        config_cls.model_validate(missing_type)
+
     invalid_tag = {"baz": {"type": "Baz"}}
     with pytest.raises(ValueError, match="does not match any of the expected tags"):
         config_cls.model_validate(invalid_tag)

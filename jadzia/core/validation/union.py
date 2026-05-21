@@ -24,11 +24,12 @@ def _discriminate_tagged_union(value: Any) -> str | None:
             is not a dictionary or does not contain that key.
 
     Important:
-        This function _pops_ the `type` key out of `value`
-        whenever `value` is a dictionary.
+        This function mutates `value` whenever it is a dictionary by popping
+        the `type` key out. This is done to prepare `value` for validation
+        by a model that does not require a `type` field.
     """
     if isinstance(value, dict):
-        return value.pop("type")
+        return value.pop("type", None)
     elif isinstance(value, BaseModel):
         return type(value).__name__
     else:
