@@ -7,12 +7,12 @@ requires-python = ">=3.12,<3.14"
 dependencies = [
     "equinox>=0.13.8",
     "grain>=0.2.16",
-    "jax>=0.10.0",
+    "jax>=0.10.1",
     "lmdb>=2.2.0",
     "msgpack>=1.1.2",
     "numpy>=2.4.6",
     "optax>=0.2.8",
-    "polars>=1.40.1",
+    "polars>=1.41.0",
     "pydantic>=2.13.4",
     "pyyaml>=6.0.3",
 ]
@@ -25,14 +25,14 @@ doc = [
     "mkdocstrings>=1.0.4",
     "mkdocstrings-python>=2.0.3",
     "pymdown-extensions>=10.21.3",
-    "ruff>=0.15.13",
+    "ruff>=0.15.14",
 ]
 test = [
     "pytest>=9.0.3",
     "pytest-cov>=7.1.0",
     "pytest-mock>=3.15.1",
-    "ruff>=0.15.13",
-    "ty>=0.0.37",
+    "ruff>=0.15.14",
+    "ty>=0.0.39",
 ]
 
 [tool.uv]
