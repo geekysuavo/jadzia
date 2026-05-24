@@ -8,6 +8,7 @@ from pydantic import DirectoryPath, PrivateAttr, ValidationInfo, model_validator
 
 # Dax
 from jadzia.core.validation.base import Config
+from jadzia.core.validation.seed import RandomSeed
 
 
 class RuntimeContext(Config):
@@ -17,10 +18,12 @@ class RuntimeContext(Config):
     Attributes:
         name: Execution name.
         path: Working directory.
+        seed: Random seed. Generated if unset.
     """
 
     name: str
     path: DirectoryPath
+    seed: RandomSeed
 
 
 class WithRuntimeContext:
