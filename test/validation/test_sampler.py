@@ -1,0 +1,65 @@
+"""Tests of validated sampler classes."""
+
+# Standard
+from typing import Self
+
+# Third party
+import polars as pl
+import pytest
+from grain import RecordMetadata
+from grain.sharding import ShardOptions
+
+# Dax
+from jadzia.core.validation.context import RuntimeContext
+from jadzia.core.validation.sampler import SamplerConfig
+
+
+class ExampleSampler:
+    def __init__(
+        self,
+        num_records: int,
+        shard_options: ShardOptions,
+        seed: int | None,
+        key: int,
+    ):
+        self.key = key
+
+    def __getitem__(self, index: int) -> RecordMetadata:
+        return RecordMetadata(index=index, record_key=self.key, rng=None)
+
+    @classmethod
+    def from_df(
+        cls,
+        df: pl.DataFrame,
+        seed: int | None,
+        shard_options: ShardOptions,
+        key: int,
+    ) -> tuple[Self, pl.DataFrame]:
+        return (cls(len(df), seed, shard_options, key), df)
+
+
+@pytest.mark.parametrize("key", [2, 3])
+def test_sampler(tmp_path, key):
+    """Signature discovery of samplers produces the expected results."""
+    config_cls = SamplerConfig.auto(ExampleSampler)
+    assert issubclass(config_cls, SamplerConfig)
+
+    with pytest.raises(ValueError, match="Field required"):
+        config_cls()
+
+    with pytest.raises(ValueError, match="runtime context not available"):
+        config_cls(key=key)
+
+    data = {"key": key}
+    context = RuntimeContext(name="test", path=tmp_path)
+    config = config_cls.model_validate(data, context=context)
+
+    df = pl.DataFrame({"x": [1, 2, 3], "y": [4, 5, 6]})
+    (obj, new_df) = config.build_instance(df)
+    assert isinstance(obj, ExampleSampler)
+    assert new_df is df
+
+    metadata = obj[12]
+    assert metadata.index == 12
+    assert metadata.record_key == key
+    assert metadata.rng is None
