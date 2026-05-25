@@ -30,18 +30,21 @@ def version_strs(versions):
 def test_unchecked(major, minor):
     """Schema versions may be converted to and from strings."""
     version_str = f"{major}.{minor}"
-    version = SchemaVersion.from_str(version_str, check=False)
+    version = SchemaVersion.from_any(version_str, check=False)
     assert version == SchemaVersion(major, minor)
     assert str(version) == version_str
     assert version.major == major
     assert version.minor == minor
 
-    with pytest.raises(TypeError, match="expected str"):
-        SchemaVersion.from_str(1.2)
+    version_float = major + minor / 10
+    assert SchemaVersion.from_any(version_float, check=False) == version
+
+    with pytest.raises(TypeError, match="expected float or str"):
+        SchemaVersion.from_any(12)
 
     for invalid_str in ("12", "1.2.3"):
         with pytest.raises(ValueError, match=r"expected '.*' format"):
-            SchemaVersion.from_str(invalid_str)
+            SchemaVersion.from_any(invalid_str)
 
 
 def test_checked(versions, version_strs):
@@ -52,11 +55,11 @@ def test_checked(versions, version_strs):
     assert different_version != package_version
     assert different_version_str != package_version_str
 
-    same_version = SchemaVersion.from_str(package_version_str)
+    same_version = SchemaVersion.from_any(package_version_str)
     assert same_version == package_version
 
     with pytest.raises(ValueError, match="expected schema version"):
-        SchemaVersion.from_str(different_version_str)
+        SchemaVersion.from_any(different_version_str)
 
 
 def test_validation(versions, version_strs):

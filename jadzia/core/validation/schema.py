@@ -33,25 +33,26 @@ class SchemaVersion(NamedTuple):
         return cls(major, minor)
 
     @classmethod
-    def from_str(cls, value: str, *, check: bool = True) -> Self:
+    def from_any(cls, value: float | str, *, check: bool = True) -> Self:
         """
-        Convert a string into a schema version.
+        Convert a float or string into a schema version.
 
         Args:
-            value: String value to convert.
+            value: Value to convert.
             check: When true, check that the specified version matches the package.
 
         Returns:
             Parsed schema version.
 
         Raises:
-            TypeError: If the value is not a string.
+            TypeError: If the value is not a float or string.
             ValueError: If the value is not a proper schema version string,
                 or if the value does not match the current package version.
         """
-        if not isinstance(value, str):
-            raise TypeError(f"expected str, got {type(value).__name__}")
+        if not isinstance(value, float | str):
+            raise TypeError(f"expected float or str, got {type(value).__name__}")
 
+        value = str(value)
         parts = value.split(".")
         if len(parts) != 2:
             raise ValueError(f"expected 'major.minor' format, got {value!r}")
@@ -68,7 +69,7 @@ class SchemaVersion(NamedTuple):
 
 type SchemaVersionStr = Annotated[
     SchemaVersion,
-    BeforeValidator(SchemaVersion.from_str),
+    BeforeValidator(SchemaVersion.from_any),
     PlainSerializer(SchemaVersion.__str__),
 ]
 """Schema version string field annotation."""
