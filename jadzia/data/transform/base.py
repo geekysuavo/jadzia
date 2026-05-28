@@ -1,28 +1,21 @@
 """Transformation base classes."""
 
 # Standard
-from abc import ABCMeta, abstractmethod
-from dataclasses import dataclass
-from typing import Any, Literal, dataclass_transform, overload
+from abc import abstractmethod
+from typing import Any, Literal, overload
 
 # Third party
 import grain
 from numpy.random import Generator
 
+# Dax
+from jadzia.core.meta import AbstractDataclassMeta
+
 type Element = dict[str, Any]
 """Expected type of each transformed element."""
 
 
-@dataclass_transform(frozen_default=True)
-class _BaseMeta(ABCMeta):
-    """Minimal metaclass providing dataclass semantics for transformations."""
-
-    def __new__(cls, name, bases, dct):
-        new_cls = super().__new__(cls, name, bases, dct)
-        return dataclass(new_cls, frozen=True)  # ty: ignore[no-matching-overload]
-
-
-class _Base(metaclass=_BaseMeta):
+class _Base(metaclass=AbstractDataclassMeta):
     """
     Transformation base class.
 
