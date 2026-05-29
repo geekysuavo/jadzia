@@ -100,9 +100,9 @@ class CompositeModel(BlockConfig):
         modules = {}
         for name, block in self.blocks.items():
             if block.requires_key:
-                modules[name] = block.build_instance(keys.pop(), with_state=with_state)
+                modules[name] = block.build_instance(keys.pop())
             else:
-                modules[name] = block.build_instance(with_state=with_state)
+                modules[name] = block.build_instance()
 
         blocks = tuple(
             CompositeModelBlock(
