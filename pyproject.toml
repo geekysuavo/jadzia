@@ -12,7 +12,7 @@ dependencies = [
     "msgpack>=1.1.2",
     "numpy>=2.4.6",
     "optax>=0.2.8",
-    "polars>=1.41.0",
+    "polars>=1.41.1",
     "pydantic>=2.13.4",
     "pyyaml>=6.0.3",
 ]
@@ -25,14 +25,14 @@ doc = [
     "mkdocstrings>=1.0.4",
     "mkdocstrings-python>=2.0.3",
     "pymdown-extensions>=10.21.3",
-    "ruff>=0.15.14",
+    "ruff>=0.15.15",
 ]
 test = [
     "pytest>=9.0.3",
     "pytest-cov>=7.1.0",
     "pytest-mock>=3.15.1",
-    "ruff>=0.15.14",
-    "ty>=0.0.39",
+    "ruff>=0.15.15",
+    "ty>=0.0.40",
 ]
 
 [tool.uv]
