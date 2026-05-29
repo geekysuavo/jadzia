@@ -14,7 +14,7 @@ from jadzia.core.validation.context import WithRuntimeContext
 
 
 class Sampler(GrainSampler, Protocol):
-    """A [grain.samplers.Sampler][] that may be built from a [polars.DataFrame][]."""
+    """A [grain.samplers.Sampler][] that may be built from a data frame."""
 
     @classmethod
     def from_df(

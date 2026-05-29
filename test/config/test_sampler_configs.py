@@ -11,9 +11,9 @@ from jadzia.core.validation.context import RuntimeContext
 
 config_adapter = TypeAdapter(Sampler)
 config_data = [
-    {"type": "Index"},
-    {"type": "Index", "shuffle": True},
-    {"type": "Index", "shuffle": True, "num_epochs": 2},
+    {"type": "General"},
+    {"type": "General", "shuffle": True},
+    {"type": "General", "shuffle": True, "num_epochs": 2},
     {"type": "Sequential"},
 ]
 

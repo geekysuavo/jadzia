@@ -1,4 +1,4 @@
-"""Index sampler from [grain.samplers][]."""
+"""General index sampler from [grain.samplers][]."""
 
 # Standard
 from typing import Self
@@ -9,7 +9,7 @@ from grain.samplers import IndexSampler
 from grain.sharding import NoSharding, ShardOptions
 
 
-class Index(IndexSampler):
+class General(IndexSampler):
     """Wrapper around [grain.samplers.IndexSampler][]."""
 
     @classmethod
@@ -46,4 +46,4 @@ class Index(IndexSampler):
         return (sampler, df)
 
 
-__all__ = ["Index"]
+__all__ = ["General"]
