@@ -226,6 +226,7 @@ name = "jadzia"
 version = "0.1.0"
 source = { editable = "." }
 dependencies = [
+    { name = "click" },
     { name = "equinox" },
     { name = "grain" },
     { name = "jax" },
@@ -258,6 +259,7 @@ test = [
 
 [package.metadata]
 requires-dist = [
+    { name = "click", specifier = ">=8.4.1" },
     { name = "equinox", specifier = ">=0.13.8" },
     { name = "grain", specifier = ">=0.2.16" },
     { name = "jax", specifier = ">=0.10.1" },
