@@ -6,7 +6,6 @@ from typing import Self
 # Third party
 import polars as pl
 from grain.samplers import IndexSampler
-from grain.sharding import NoSharding, ShardOptions
 
 
 class General(IndexSampler):
@@ -17,7 +16,6 @@ class General(IndexSampler):
         cls,
         df: pl.DataFrame,
         seed: int | None = None,
-        shard_options: ShardOptions = NoSharding(),
         shuffle: bool = False,
         num_epochs: int | None = None,
     ) -> tuple[Self, pl.DataFrame]:
@@ -27,7 +25,6 @@ class General(IndexSampler):
         Args:
             df: Input data frame.
             seed: Random seed.
-            shard_options: Sharding options.
             shuffle: Whether to globally shuffle the dataset.
             num_epochs: Number of epochs to repeat the dataset,
                 or `None` to repeat indefinitely.
@@ -38,7 +35,6 @@ class General(IndexSampler):
         """
         sampler = cls(
             num_records=len(df),
-            shard_options=shard_options,
             seed=seed,
             shuffle=shuffle,
             num_epochs=num_epochs,

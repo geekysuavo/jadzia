@@ -1,15 +1,14 @@
 """Validation base classes for samplers."""
 
 # Standard
-from typing import Annotated, Any, ClassVar, Protocol, Self
+from typing import Any, ClassVar, Protocol, Self
 
 # Third party
 import polars as pl
 from grain.samplers import Sampler as GrainSampler
-from grain.sharding import ShardByJaxProcess, ShardOptions
 
 # Dax
-from jadzia.core.validation.buildable import BuildableConfig, Exclude
+from jadzia.core.validation.buildable import BuildableConfig
 from jadzia.core.validation.context import WithRuntimeContext
 
 
@@ -21,7 +20,6 @@ class Sampler(GrainSampler, Protocol):
         cls,
         df: pl.DataFrame,
         seed: int | None,
-        shard_options: ShardOptions,
         **kwargs: Any,
     ) -> tuple[Self, pl.DataFrame]: ...
 
@@ -31,18 +29,9 @@ type SamplerInstanceType = type[Sampler]
 
 
 class SamplerConfig(BuildableConfig[Sampler], WithRuntimeContext):
-    """
-    Sampler configuration base class.
-
-    Attributes:
-        drop_remainder: When true, create even splits and drop remainder examples
-            when sharding the dataset, ensuring the same number of records per shard.
-            When false, distribute the remainder over the first shards.
-    """
+    """Sampler configuration base class."""
 
     instance_type: ClassVar[SamplerInstanceType]
-
-    drop_remainder: Annotated[bool, Exclude] = False
 
     def build_instance(  # ty: ignore[invalid-method-override]
         self,
@@ -65,8 +54,7 @@ class SamplerConfig(BuildableConfig[Sampler], WithRuntimeContext):
         cls = type(self)
         seed = self._context.seed
         kwargs = self.model_dump_for_instance()
-        shard_options = ShardByJaxProcess(self.drop_remainder)
-        return cls.instance_type.from_df(df, seed, shard_options, **kwargs)
+        return cls.instance_type.from_df(df, seed, **kwargs)
 
     @classmethod
     def auto_hook(

@@ -7,7 +7,7 @@ from typing import Self
 import polars as pl
 import pytest
 from grain import RecordMetadata
-from grain.sharding import ShardOptions
+from grain.sharding import NoSharding, ShardOptions
 
 # Dax
 from jadzia.core.validation.context import RuntimeContext
@@ -18,9 +18,9 @@ class ExampleSampler:
     def __init__(
         self,
         num_records: int,
-        shard_options: ShardOptions,
         seed: int | None,
         key: int,
+        shard_options: ShardOptions = NoSharding(),
     ):
         self.key = key
 
@@ -32,10 +32,9 @@ class ExampleSampler:
         cls,
         df: pl.DataFrame,
         seed: int | None,
-        shard_options: ShardOptions,
         key: int,
     ) -> tuple[Self, pl.DataFrame]:
-        return (cls(len(df), seed, shard_options, key), df)
+        return (cls(len(df), seed, key), df)
 
 
 @pytest.mark.parametrize("key", [2, 3])

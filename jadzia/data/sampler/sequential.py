@@ -6,7 +6,6 @@ from typing import Self
 # Third party
 import polars as pl
 from grain.samplers import SequentialSampler
-from grain.sharding import NoSharding, ShardOptions
 
 
 class Sequential(SequentialSampler):
@@ -17,7 +16,6 @@ class Sequential(SequentialSampler):
         cls,
         df: pl.DataFrame,
         seed: int | None = None,
-        shard_options: ShardOptions = NoSharding(),
     ) -> tuple[Self, pl.DataFrame]:
         """
         Build a sequential sampler from a data frame.
@@ -25,13 +23,12 @@ class Sequential(SequentialSampler):
         Args:
             df: Input data frame.
             seed: Random seed.
-            shard_options: Sharding options.
 
         Returns:
             Newly built sampler instance.
             Potentially updated data frame.
         """
-        sampler = cls(num_records=len(df), shard_options=shard_options, seed=seed)
+        sampler = cls(num_records=len(df), seed=seed)
         return (sampler, df)
 
 
