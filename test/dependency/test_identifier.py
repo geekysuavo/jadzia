@@ -5,11 +5,16 @@ import pytest
 from pydantic import BaseModel
 
 # Dax
-from jadzia.core.dependency.identifier import Identifier, IdentifierStr
+from jadzia.core.dependency.identifier import (
+    BatchIdentifierStr,
+    Identifier,
+    IdentifierStr,
+)
 
 
 class ConfigCls(BaseModel):
     ident: IdentifierStr
+    batch: BatchIdentifierStr | None = None
 
     @property
     def output_names(self) -> tuple[str, ...]:
@@ -52,7 +57,7 @@ def test_batch_identifiers():
     assert ident.is_batch is True
 
 
-def test_identifier_embedded():
+def test_identifier_annotation():
     """Identifiers inside configuration classes are converted to and from strings."""
     config = ConfigCls(ident="ermagherd.out")
     assert config.ident == Identifier("ermagherd", "out")
@@ -62,3 +67,17 @@ def test_identifier_embedded():
 
     with pytest.raises(ValueError, match=r"expected '.*' format"):
         ConfigCls(ident="berks")
+
+
+def test_batch_identifier_annotation():
+    """Batch identifier annotations must have `is_batch` set to true."""
+    valid_data = {"ident": "x.y", "batch": Identifier("z", "w", is_batch=True)}
+    ConfigCls.model_validate(valid_data)
+
+    invalid_data = {"ident": "x.y", "batch": "z.w"}
+    with pytest.raises(ValueError, match="expected a batch identifier"):
+        ConfigCls.model_validate(invalid_data)
+
+    invalid_data = {"ident": "x.y", "batch": Identifier("z", "w", is_batch=False)}
+    with pytest.raises(ValueError, match="expected a batch identifier"):
+        ConfigCls.model_validate(invalid_data)

@@ -4,7 +4,7 @@
 from typing import Annotated, NamedTuple, Protocol, Self
 
 # Third party
-from pydantic import BeforeValidator, PlainSerializer
+from pydantic import AfterValidator, BeforeValidator, PlainSerializer
 
 
 class _Node(Protocol):
@@ -76,6 +76,14 @@ class Identifier(NamedTuple):
         return cls(node, output, is_batch)
 
 
+def _is_batch_identifier(value: Identifier) -> Identifier:
+    """Validator that ensures an identifier has `is_batch` set to true."""
+    if value.is_batch:
+        return value
+    else:
+        raise ValueError(f"expected a batch identifier, but '{value}' is not")
+
+
 type IdentifierStr = Annotated[
     Identifier,
     BeforeValidator(Identifier.from_str),
@@ -83,4 +91,12 @@ type IdentifierStr = Annotated[
 ]
 """Type annotation for identifiers that may be coerced from strings."""
 
-__all__ = ["Identifier", "IdentifierStr"]
+type BatchIdentifierStr = Annotated[
+    Identifier,
+    BeforeValidator(Identifier.from_str),
+    AfterValidator(_is_batch_identifier),
+    PlainSerializer(Identifier.__str__),
+]
+"""Type annotation for batch identifiers that may be coerced from strings."""
+
+__all__ = ["BatchIdentifierStr", "Identifier", "IdentifierStr"]
