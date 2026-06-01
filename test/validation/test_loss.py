@@ -10,7 +10,8 @@ import jax.numpy as jnp
 import pytest
 
 # Dax
-from jadzia.core.validation.loss import GeneralLoss, SimpleLoss
+from jadzia.core.dependency.identifier import Identifier
+from jadzia.core.validation.loss import LossConfig
 
 
 class General(eqx.Module):
@@ -46,12 +47,12 @@ class InvalidOutput(eqx.Module):
 
 def test_simple_loss():
     """Signature discovery of simple losses produces the expected results."""
-    config_cls = SimpleLoss.auto(Simple)
-    assert issubclass(config_cls, SimpleLoss)
+    config_cls = LossConfig.auto(Simple)
+    assert issubclass(config_cls, LossConfig)
 
-    config = config_cls(input="foobar")
-    assert config.prediction_names == ("foobar",)
-    assert config.reference_names == ("foobar",)
+    config = config_cls(inputs={"x": "foo.f", "y": "bar.b"})
+    assert config.prediction_names == (Identifier("foo", "f"),)
+    assert config.reference_names == (Identifier("bar", "b"),)
 
     obj = config.build_instance()
     assert isinstance(obj, Simple)
@@ -62,12 +63,12 @@ def test_simple_loss():
 
 def test_general_loss():
     """Signature discovery of general losses produces the expected results."""
-    config_cls = GeneralLoss.auto(General)
-    assert issubclass(config_cls, GeneralLoss)
+    config_cls = LossConfig.auto(General)
+    assert issubclass(config_cls, LossConfig)
 
-    config = config_cls(inputs={"x": "X", "y": "Y", "z": "Z", "w": "W"})
-    assert config.prediction_names == ("X", "Y")
-    assert config.reference_names == ("Z", "W")
+    config = config_cls(inputs={"x": "X.x", "y": "Y.y", "z": "Z.z", "w": "W.w"})
+    assert config.prediction_names == (Identifier("X", "x"), Identifier("Y", "y"))
+    assert config.reference_names == (Identifier("Z", "z"), Identifier("W", "w"))
 
     obj = config.build_instance()
     assert isinstance(obj, General)
@@ -79,16 +80,16 @@ def test_general_loss():
         config_cls(inputs={})
 
     with pytest.raises(ValueError, match="invalid module call inputs"):
-        config_cls(inputs={"x": "X", "y": "Y", "z": "Z", "w": "W", "extra": "E"})
+        config_cls(inputs={"x": "X.x", "y": "Y.y", "z": "Z.z", "w": "W.w", "e": "E.e"})
 
 
 def test_markerless_loss():
     """Signature discovery of markerless losses produces the expected results."""
-    config_cls = GeneralLoss.auto(Markerless)
-    assert issubclass(config_cls, GeneralLoss)
+    config_cls = LossConfig.auto(Markerless)
+    assert issubclass(config_cls, LossConfig)
 
-    config = config_cls(inputs={"x": "Xx", "y": "Yy"})
-    assert config.prediction_names == ("Xx", "Yy")
+    config = config_cls(inputs={"x": "x.X", "y": "y.Y"})
+    assert config.prediction_names == (Identifier("x", "X"), Identifier("y", "Y"))
     assert config.reference_names == ()
 
     obj = config.build_instance()
@@ -98,10 +99,4 @@ def test_markerless_loss():
 def test_incompatible_signatures_fail():
     """Signatures are checked for compatibility with loss config classes."""
     with pytest.raises(ValueError, match="expected one module call output"):
-        GeneralLoss.auto(InvalidOutput)(inputs={})
-
-    with pytest.raises(ValueError, match="expected one module call output"):
-        SimpleLoss.auto(InvalidOutput)(input="foo")
-
-    with pytest.raises(ValueError, match="expected one module call input pair"):
-        SimpleLoss.auto(General)(input="bar")
+        LossConfig.auto(InvalidOutput)(inputs={})

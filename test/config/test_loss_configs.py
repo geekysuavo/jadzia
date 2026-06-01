@@ -7,14 +7,15 @@ from pydantic import TypeAdapter
 # Dax
 from jadzia.config.loss.composite import CompositeLoss
 from jadzia.config.loss.function import LossFunction
+from jadzia.core.dependency.identifier import Identifier
 
 config_adapter = TypeAdapter(LossFunction)
 config_data = [
-    {"type": "Direct", "inputs": {"prediction": "in"}},
-    {"type": "MAE", "input": "in"},
-    {"type": "MSE", "input": "in"},
-    {"type": "Huber", "input": "in"},
-    {"type": "Huber", "input": "in", "delta": 2.0},
+    {"type": "Direct", "inputs": {"prediction": "a.b"}},
+    {"type": "MAE", "inputs": {"yhat": "a.b", "y": "a.b"}},
+    {"type": "MSE", "inputs": {"yhat": "a.b", "y": "a.b"}},
+    {"type": "Huber", "inputs": {"yhat": "a.b", "y": "a.b"}},
+    {"type": "Huber", "inputs": {"yhat": "a.b", "y": "a.b"}, "delta": 2.0},
 ]
 
 
@@ -29,27 +30,19 @@ def test_loss_function_configs(data):
 def test_composite_loss_config():
     """The composite loss configuration validates and builds a module correctly."""
     config = CompositeLoss(
-        terms={"mse": 0.5, "huber": 0.125, "direct": 1.0},
-        functions={
-            "mse": {"type": "MSE", "input": "foo"},
-            "huber": {"type": "Huber", "input": "bar", "delta": 0.1},
-            "direct": {"type": "Direct", "inputs": {"prediction": "zoo"}},
-        },
+        mse={"type": "MSE", "inputs": {"yhat": "foo.yhat", "y": "foo.y"}},
+        huber={"type": "Huber", "inputs": {"yhat": "bar.yhat", "y": "bar.y"}},
+        direct={"type": "Direct", "inputs": {"prediction": "zoo.yhat"}},
     )
-    assert config.prediction_names == ("bar", "foo", "zoo")
-    assert config.reference_names == ("bar", "foo")
+    assert config.prediction_names == (
+        Identifier("bar", "yhat"),
+        Identifier("foo", "yhat"),
+        Identifier("zoo", "yhat"),
+    )
+    assert config.reference_names == (
+        Identifier("bar", "y"),
+        Identifier("foo", "y"),
+    )
 
     obj = config.build_instance()
     assert isinstance(obj, config.instance_type)
-
-    with pytest.raises(ValueError, match="invalid composite loss"):
-        CompositeLoss(terms={"mse": 0.5}, functions={})
-
-    with pytest.raises(ValueError, match="invalid composite loss"):
-        CompositeLoss(
-            terms={"mse": 0.5},
-            functions={
-                "mse": {"type": "MSE", "input": "foo"},
-                "mae": {"type": "MAE", "input": "bar"},
-            },
-        )
