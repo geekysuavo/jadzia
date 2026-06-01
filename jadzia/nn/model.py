@@ -1,7 +1,7 @@
 """Composite model."""
 
 # Standard
-from collections.abc import Callable
+from collections.abc import Callable, Sequence
 from typing import NamedTuple, cast
 
 # Third party
@@ -26,6 +26,21 @@ class CompositeModelBlock(NamedTuple):
     input_names: tuple[Identifier, ...]
     output_names: tuple[str, ...]
 
+    def bind(self, outputs: Sequence[jax.Array]) -> dict[Identifier, jax.Array]:
+        """
+        Bind a sequence of output values to identifiers.
+
+        Args:
+            outputs: Output values to bind.
+
+        Returns:
+            Dictionary of bound output values.
+        """
+        return {
+            Identifier(self.name, name): value
+            for name, value in zip(self.output_names, outputs, strict=True)
+        }
+
 
 class CompositeModel(eqx.Module):
     """
@@ -46,14 +61,18 @@ class CompositeModel(eqx.Module):
             state: Updated state.
         """
 
-        outputs: dict[str, jax.Array]
+        outputs: dict[Identifier, jax.Array]
         state: eqx.nn.State
 
     modules: dict[str, eqx.Module]
     blocks: tuple[CompositeModelBlock, ...]
-    outputs: tuple[tuple[str, Identifier], ...]
+    outputs: tuple[Identifier, ...]
 
-    def __call__(self, inputs: dict[str, jax.Array], state: eqx.nn.State) -> ReturnType:
+    def __call__(
+        self,
+        inputs: dict[Identifier, jax.Array],
+        state: eqx.nn.State,
+    ) -> ReturnType:
         """
         Compute all blocks in their defined order.
 
@@ -64,7 +83,7 @@ class CompositeModel(eqx.Module):
         Returns:
             Model outputs and updated model state.
         """
-        arrays = self._init(**inputs)
+        arrays = inputs.copy()
         for block in self.blocks:
             module_inputs = (arrays[name] for name in block.input_names)
 
@@ -77,44 +96,10 @@ class CompositeModel(eqx.Module):
             if isinstance(module_outputs, jax.Array):
                 module_outputs = (module_outputs,)
 
-            named_outputs = dict(zip(block.output_names, module_outputs, strict=True))
-            self._update(arrays, name=block.name, **named_outputs)
+            arrays.update(block.bind(module_outputs))
 
-        outputs = {name: arrays[output] for name, output in self.outputs}
+        outputs = {output: arrays[output] for output in self.outputs}
         return self.ReturnType(outputs, state)
-
-    @classmethod
-    def _init(cls, **outputs: jax.Array) -> dict[Identifier, jax.Array]:
-        """
-        Initialize a dictionary of temporary arrays from model inputs.
-
-        Args:
-            outputs: Keyword arguments for each model input.
-
-        Returns:
-            New dictionary of arrays.
-        """
-        arrays: dict[Identifier, jax.Array] = {}
-        cls._update(arrays, name="batch", **outputs)
-        return arrays
-
-    @staticmethod
-    def _update(
-        arrays: dict[Identifier, jax.Array],
-        *,
-        name: str,
-        **outputs: jax.Array,
-    ):
-        """
-        Update a dictionary of temporary arrays with new block outputs.
-
-        Args:
-            arrays: Dictionary of temporary arrays to update.
-            name: Name of the new block.
-            outputs: Keyword arguments of the block outputs.
-        """
-        update = {Identifier(name, key): value for key, value in outputs.items()}
-        arrays.update(update)
 
 
 __all__ = ["CompositeModel", "CompositeModelBlock"]
