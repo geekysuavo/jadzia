@@ -5,7 +5,7 @@ import pytest
 from pydantic import BaseModel
 
 # Dax
-from jadzia.core.dependency.identifier import Identifier, IdentifierStr, SpecialNodes
+from jadzia.core.dependency.identifier import Identifier, IdentifierStr
 
 
 class ConfigCls(BaseModel):
@@ -16,12 +16,16 @@ class ConfigCls(BaseModel):
         return (self.ident.output,)
 
 
-def test_string_conversion():
+@pytest.mark.parametrize("is_batch", [False, True])
+def test_string_conversion(is_batch):
     """Identifiers may be converted from strings."""
-    example = Identifier.from_str("foo.bar")
-    assert example == Identifier("foo", "bar")
+    example = Identifier.from_str("foo.bar", is_batch=is_batch)
+    assert example == Identifier("foo", "bar", is_batch)
     assert example.node == "foo"
     assert example.output == "bar"
+    assert example.is_batch == is_batch
+
+    assert Identifier.from_str(example) is example
 
     with pytest.raises(TypeError, match="expected str"):
         Identifier.from_str(5)
@@ -39,14 +43,12 @@ def test_conversion_to_string():
     assert str(ident) == "hello.world"
 
 
-def test_special_nodes():
+def test_batch_identifiers():
     """Identifier attributes are parsed correctly."""
     ident = Identifier("foo", "bar")
-    assert ident.is_special is False
     assert ident.is_batch is False
 
-    ident = Identifier(SpecialNodes.BATCH, "out")
-    assert ident.is_special is True
+    ident = Identifier("baz", "out", is_batch=True)
     assert ident.is_batch is True
 
 

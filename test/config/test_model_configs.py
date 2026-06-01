@@ -7,6 +7,7 @@ import pytest
 
 # Dax
 from jadzia.config.model import CompositeModel
+from jadzia.core.dependency.identifier import Identifier
 
 
 @pytest.mark.parametrize("dag", [True, False])
@@ -22,7 +23,7 @@ def test_model_config(missing_input, unused_block, dag):
         "blocks": {
             "blk_in": {
                 "type": "Linear",
-                "input": "batch.feats",
+                "input": Identifier.from_str("batch.feats", is_batch=True),
                 "num_input_features": 3,
                 "num_output_features": 16,
             },
@@ -102,7 +103,7 @@ def test_model_without_key():
         blocks={
             "split": {
                 "type": "UnstackFission",
-                "input": "batch.data",
+                "input": Identifier.from_str("batch.data", is_batch=True),
                 "outputs": ["first", "second"],
                 "axis": -1,
             },

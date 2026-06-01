@@ -9,7 +9,7 @@ import equinox as eqx
 import jax
 
 # Dax
-from jadzia.core.dependency.identifier import Identifier, SpecialNodes
+from jadzia.core.dependency.identifier import Identifier
 
 
 class CompositeModelBlock(NamedTuple):
@@ -95,7 +95,7 @@ class CompositeModel(eqx.Module):
             New dictionary of arrays.
         """
         arrays: dict[Identifier, jax.Array] = {}
-        cls._update(arrays, name=SpecialNodes.BATCH, **outputs)
+        cls._update(arrays, name="batch", **outputs)
         return arrays
 
     @staticmethod
