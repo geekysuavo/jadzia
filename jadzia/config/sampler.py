@@ -35,8 +35,7 @@ class Sequential(SamplerConfig):
 
 
 type Sampler = Annotated[
-    Annotated[General, Tag("General")]
-    | Annotated[Sequential, Tag("Sequential")],
+    Annotated[General, Tag("General")] | Annotated[Sequential, Tag("Sequential")],
     UnionDiscriminator(),
     UnionSerializer(),
 ]

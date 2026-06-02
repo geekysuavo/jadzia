@@ -63,8 +63,7 @@ class AdamW(OptimizerConfig):
 
 
 type Optimizer = Annotated[
-    Annotated[Adam, Tag("Adam")]
-    | Annotated[AdamW, Tag("AdamW")],
+    Annotated[Adam, Tag("Adam")] | Annotated[AdamW, Tag("AdamW")],
     UnionDiscriminator(),
     UnionSerializer(),
 ]

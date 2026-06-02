@@ -116,6 +116,7 @@ class CompositeModel(NodeMappingConfig[Block]):
     @model_validator(mode="after")
     def _ensure_valid_graph(self) -> Self:
         """Ensure that the model configuration is valid."""
+
         def not_batch(output: Identifier) -> bool:
             return not output.is_batch
 

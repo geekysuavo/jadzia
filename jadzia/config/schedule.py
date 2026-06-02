@@ -46,8 +46,7 @@ class CosineDecay(ScheduleConfig):
 
 
 type Schedule = Annotated[
-    Annotated[Constant, Tag("Constant")]
-    | Annotated[CosineDecay, Tag("CosineDecay")],
+    Annotated[Constant, Tag("Constant")] | Annotated[CosineDecay, Tag("CosineDecay")],
     UnionDiscriminator(),
     UnionSerializer(),
 ]
