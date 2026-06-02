@@ -1,7 +1,6 @@
 """Composite model configuration."""
 
 # Standard
-from collections.abc import Iterable
 from typing import ClassVar, Literal, Self, overload
 
 # Third party
@@ -12,14 +11,13 @@ from pydantic import model_validator
 
 # Dax
 from jadzia.config.block import Block
-from jadzia.core.dependency.graph import Graph
 from jadzia.core.dependency.identifier import Identifier
-from jadzia.core.validation.mapping import MappingConfig
+from jadzia.core.validation.mapping import NodeMappingConfig
 from jadzia.nn.model import CompositeModel as CompositeModelImpl
 from jadzia.nn.model import CompositeModelBlock
 
 
-class CompositeModel(MappingConfig[Block]):
+class CompositeModel(NodeMappingConfig[Block]):
     """Configuration for [jadzia.nn.model.CompositeModel][]."""
 
     instance_type: ClassVar[type[eqx.Module]] = CompositeModelImpl
@@ -34,16 +32,6 @@ class CompositeModel(MappingConfig[Block]):
         block_inputs = (block.input_names for block in self.values())
         batch_inputs = filter(is_batch, set().union(*block_inputs))
         return tuple(sorted(batch_inputs))
-
-    @property
-    def output_names(self) -> tuple[Identifier, ...]:
-        """Names of outputs that are returned by the model."""
-
-        def to_identifiers(item: tuple[str, Block]) -> tuple[Identifier, ...]:
-            return Identifier.from_outputs(*item)
-
-        block_outputs = set().union(*map(to_identifiers, self.items()))
-        return tuple(sorted(block_outputs))
 
     @overload
     def build_instance(
@@ -105,13 +93,17 @@ class CompositeModel(MappingConfig[Block]):
             else:
                 modules[name] = block.build_instance()
 
+        nodes = self.node_names(outputs)
+        if nodes.unused:
+            raise ValueError(f"blocks are unused: {', '.join(nodes.unused)}")
+
         blocks = tuple(
             CompositeModelBlock(
                 name=name,
                 input_names=tuple(map(str, self[name].input_names)),
                 output_names=tuple(map(str, Identifier.from_outputs(name, self[name]))),
             )
-            for name in self._block_order(self._block_names(outputs))
+            for name in self.node_order(nodes.used)
         )
         kwargs = {"modules": modules, "blocks": blocks, "outputs": outputs}
 
@@ -121,74 +113,22 @@ class CompositeModel(MappingConfig[Block]):
         else:
             return cls.instance_type(**kwargs)
 
-    def _block_names(self, outputs: Iterable[Identifier]) -> set[str]:
-        """Determine which blocks are required to produce a set of outputs."""
-        outputs_to_build = set(outputs)
-        built_block_names = set()
-        while outputs_to_build:
-            output = outputs_to_build.pop()
-            if output.is_batch or output.node in built_block_names:
-                continue
-
-            name = output.node
-            block = self[name]
-
-            built_block_names.add(name)
-            outputs_to_build.update(block.input_names)
-
-        unused_blocks = set(self) - built_block_names
-        if unused_blocks:
-            raise ValueError(f"blocks are unused: {', '.join(sorted(unused_blocks))}")
-        else:
-            return built_block_names
-
-    def _block_order(self, subset: Iterable[str] | None = None) -> tuple[str, ...]:
-        """Determine the execution order of each model building block."""
-        deps = {
-            name: {dep.node for dep in block.input_names}
-            for name, block in self.items()
-        }
-        return Graph(deps).sort_nodes(subset)
-
     @model_validator(mode="after")
     def _ensure_valid_model(self) -> Self:
         """Ensure that the model configuration is valid."""
-
-        # condition: all non-batch block inputs are satisfied by other blocks.
-        def not_batch(output: Identifier) -> bool:
-            return not output.is_batch
-
-        all_block_inputs = {
-            name: set(filter(not_batch, block.input_names))
-            for name, block in self.items()
-        }
-
-        all_block_outputs: set[Identifier] = set()
-        for name, block in self.items():
-            all_block_outputs.update(Identifier.from_outputs(name, block))
-
-        missing_block_inputs = {
-            name: block_inputs - all_block_outputs
-            for name, block_inputs in all_block_inputs.items()
-            if block_inputs - all_block_outputs
-        }
-
-        if missing_block_inputs:
-            missing_lines = [
-                f"missing inputs to '{name}': ({', '.join(map(str, outputs))})"
-                for name, outputs in missing_block_inputs.items()
-            ]
+        (_, _, missing) = self.node_names()
+        missing = set(filter(lambda output: not output.is_batch, missing))
+        if missing:
             error_lines = [
                 "block inputs are not satisfied.",
-                f"all block outputs: ({', '.join(map(str, all_block_outputs))})",
-                *missing_lines,
+                f"all block outputs: ({', '.join(map(str, self.output_names))})",
+                f"missing inputs: ({', '.join(map(str, missing))})"
                 "",
             ]
             raise ValueError("\n".join(error_lines))
-
-        # condition: the block dependencies form a directed acyclic graph.
-        self._block_order()
-        return self
+        else:
+            self.node_order()
+            return self
 
 
 __all__ = ["CompositeModel"]

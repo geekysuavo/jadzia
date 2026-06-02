@@ -7,7 +7,12 @@ from typing import Annotated, NamedTuple, Protocol, Self
 from pydantic import AfterValidator, BeforeValidator, PlainSerializer
 
 
-class _Node(Protocol):
+class Node(Protocol):
+    """Node that indicates its inputs and outputs."""
+
+    @property
+    def input_names(self) -> tuple["Identifier", ...]: ...
+
     @property
     def output_names(self) -> tuple[str, ...]: ...
 
@@ -34,7 +39,7 @@ class Identifier(NamedTuple):
         return f"{self.node}.{self.output}"
 
     @classmethod
-    def from_outputs(cls, name: str, node: _Node) -> tuple[Self, ...]:
+    def from_outputs(cls, name: str, node: Node) -> tuple[Self, ...]:
         """
         Build a tuple of identifiers from a named node.
 

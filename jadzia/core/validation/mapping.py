@@ -1,23 +1,23 @@
 """Validated mapping classes."""
 
 # Standard
-from typing import Iterable, Iterator, TypeVar
+from typing import Iterable, Iterator, NamedTuple, cast
 
 # Third party
 from pydantic import ConfigDict, RootModel
 
 # Dax
+from jadzia.core.dependency.graph import Graph
+from jadzia.core.dependency.identifier import Identifier, Node
 from jadzia.core.validation.base import Config
 
-ConfigT = TypeVar("ConfigT", bound=Config)
 
-
-class MappingConfig[ConfigT](RootModel[dict[str, ConfigT]]):
+class MappingConfig[T: Config](RootModel[dict[str, T]]):
     """Mapping that holds configuration classes as values."""
 
     model_config = ConfigDict(frozen=True)
 
-    root: dict[str, ConfigT]
+    root: dict[str, T]
 
     def __len__(self) -> int:
         """
@@ -49,7 +49,7 @@ class MappingConfig[ConfigT](RootModel[dict[str, ConfigT]]):
         """
         return key in self.root
 
-    def __getitem__(self, key: str) -> ConfigT:
+    def __getitem__(self, key: str) -> T:
         """
         Get a mapping configuration entry.
 
@@ -68,13 +68,91 @@ class MappingConfig[ConfigT](RootModel[dict[str, ConfigT]]):
         """Iterate over mapping keys."""
         return self.root.keys()
 
-    def values(self) -> Iterable[ConfigT]:
+    def values(self) -> Iterable[T]:
         """Iterate over mapping values."""
         return self.root.values()
 
-    def items(self) -> Iterable[tuple[str, ConfigT]]:
+    def items(self) -> Iterable[tuple[str, T]]:
         """Iterate over mapping key-value pairs."""
         return self.root.items()
 
 
-__all__ = ["MappingConfig"]
+class NodeMappingConfig[T: Config](MappingConfig[T]):
+    """Mapping that holds a directed acyclic graph of configuration classes."""
+
+    class NodeNames(NamedTuple):
+        """
+        Summary of used, unused, and missing nodes and identifiers.
+
+        Attributes:
+            used: Used node names.
+            unused: Unused node names.
+            missing: Missing node outputs.
+        """
+
+        used: set[str]
+        unused: set[str]
+        missing: set[Identifier]
+
+    @property
+    def output_names(self) -> tuple[Identifier, ...]:
+        """All outputs that are returned by the nodes."""
+        node_outputs = {
+            identifier
+            for name, node in self.items()
+            for identifier in Identifier.from_outputs(name, cast(Node, node))
+        }
+        return tuple(sorted(node_outputs))
+
+    def node_names(self, outputs: Iterable[Identifier] | None = None) -> NodeNames:
+        """
+        Determine the used, unused and missing nodes in the graph.
+
+        Args:
+            outputs: Optional required outputs. Defaults to all outputs.
+
+        Returns:
+            Information about which nodes are used, unused or missing.
+        """
+        outputs_to_check = set(outputs or self.output_names)
+        missing_outputs = set()
+        visited_nodes = set()
+
+        while outputs_to_check:
+            output = outputs_to_check.pop()
+            name = output.node
+
+            if name in visited_nodes:
+                continue
+
+            if (
+                name not in self
+                or output.output not in cast(Node, self[name]).output_names
+            ):
+                missing_outputs.add(output)
+                continue
+
+            visited_nodes.add(name)
+            outputs_to_check.update(cast(Node, self[name]).input_names)
+
+        unvisited_nodes = set(self) - visited_nodes
+        return self.NodeNames(visited_nodes, unvisited_nodes, missing_outputs)
+
+    def node_order(self, subset: Iterable[str] | None = None) -> tuple[str, ...]:
+        """
+        Determine the node execution order.
+
+        Args:
+            subset: Optional subset of required node names. Defaults to all nodes.
+
+        Returns:
+            Sequence of node names in their execution order.
+        """
+        deps = {
+            name: {dep.node for dep in cast(Node, config).input_names}
+            for name, config in self.items()
+        }
+        return Graph(deps).sort_nodes(subset)
+
+
+__all__ = ["MappingConfig", "NodeMappingConfig"]
