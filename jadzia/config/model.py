@@ -38,7 +38,7 @@ class CompositeModel(NodeMappingConfig[Block]):
         self,
         key: jax.Array | None = None,
         *,
-        outputs: tuple[Identifier, ...] = (),
+        outputs: tuple[Identifier, ...] | None = None,
         with_state: Literal[False] = False,
     ) -> eqx.Module: ...
 
@@ -47,7 +47,7 @@ class CompositeModel(NodeMappingConfig[Block]):
         self,
         key: jax.Array | None = None,
         *,
-        outputs: tuple[Identifier, ...] = (),
+        outputs: tuple[Identifier, ...] | None = None,
         with_state: Literal[True] = True,
     ) -> tuple[eqx.Module, eqx.nn.State]: ...
 
@@ -55,7 +55,7 @@ class CompositeModel(NodeMappingConfig[Block]):
         self,
         key: jax.Array | None = None,
         *,
-        outputs: tuple[Identifier, ...] = (),
+        outputs: tuple[Identifier, ...] | None = None,
         with_state: bool = False,
     ) -> eqx.Module | tuple[eqx.Module, eqx.nn.State]:
         """
@@ -114,16 +114,18 @@ class CompositeModel(NodeMappingConfig[Block]):
             return cls.instance_type(**kwargs)
 
     @model_validator(mode="after")
-    def _ensure_valid_model(self) -> Self:
+    def _ensure_valid_graph(self) -> Self:
         """Ensure that the model configuration is valid."""
+        def not_batch(output: Identifier) -> bool:
+            return not output.is_batch
+
         (_, _, missing) = self.node_names()
-        missing = set(filter(lambda output: not output.is_batch, missing))
+        missing = set(filter(not_batch, missing))
         if missing:
             error_lines = [
                 "block inputs are not satisfied.",
                 f"all block outputs: ({', '.join(map(str, self.output_names))})",
-                f"missing inputs: ({', '.join(map(str, missing))})"
-                "",
+                f"missing inputs: ({', '.join(map(str, missing))})",
             ]
             raise ValueError("\n".join(error_lines))
         else:
