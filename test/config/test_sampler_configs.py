@@ -36,6 +36,6 @@ def df():
 def test_sampler(data, context, df):
     """Sampler configurations validate and build samplers from data frames."""
     config = config_adapter.validate_python(data, context=context)
-    (obj, new_df) = config.build_instance(df)
+    (obj, (new_df,)) = config.build_instance([df])
     assert isinstance(obj, config.instance_type)
     assert isinstance(new_df, pl.DataFrame)

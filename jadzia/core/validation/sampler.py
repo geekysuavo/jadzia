@@ -1,6 +1,7 @@
 """Validation base classes for samplers."""
 
 # Standard
+from collections.abc import Sequence
 from typing import Any, ClassVar, Protocol, Self
 
 # Third party
@@ -13,15 +14,15 @@ from jadzia.core.validation.context import WithRuntimeContext
 
 
 class Sampler(GrainSampler, Protocol):
-    """A [grain.samplers.Sampler][] that may be built from a data frame."""
+    """A [grain.samplers.Sampler][] that may be built from data frames."""
 
     @classmethod
-    def from_df(
+    def from_dfs(
         cls,
-        df: pl.DataFrame,
+        dfs: Sequence[pl.DataFrame],
         seed: int | None,
         **kwargs: Any,
-    ) -> tuple[Self, pl.DataFrame]: ...
+    ) -> tuple[Self, Sequence[pl.DataFrame]]: ...
 
 
 type SamplerInstanceType = type[Sampler]
@@ -35,26 +36,27 @@ class SamplerConfig(BuildableConfig[Sampler], WithRuntimeContext):
 
     def build_instance(  # ty: ignore[invalid-method-override]
         self,
-        df: pl.DataFrame,
-    ) -> tuple[Sampler, pl.DataFrame]:
+        dfs: Sequence[pl.DataFrame],
+    ) -> tuple[Sampler, tuple[pl.DataFrame, ...]]:
         """
         Build an instance based on this configuration.
 
-        This method returns an updated data frame, which may or may not be the
-        same data frame that was passed as input. This is done to allow samplers
+        This method returns updated data frames, which may or may not be the same
+        data frames that were passed as input. This is done to allow samplers
         an opportunity to reorganize data frame rows as needed.
 
         Args:
-            df: Input data frame.
+            dfs: Input data frames.
 
         Returns:
             Newly built sampler instance.
-            Potentially updated data frame.
+            Potentially updated data frames.
         """
         cls = type(self)
         seed = self._context.seed
         kwargs = self.model_dump_for_instance()
-        return cls.instance_type.from_df(df, seed, **kwargs)
+        (sampler, dfs) = cls.instance_type.from_dfs(dfs, seed, **kwargs)
+        return (sampler, tuple(dfs))
 
     @classmethod
     def auto_hook(

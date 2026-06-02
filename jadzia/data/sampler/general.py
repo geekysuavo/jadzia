@@ -1,6 +1,7 @@
 """General index sampler from [grain.samplers][]."""
 
 # Standard
+from collections.abc import Sequence
 from typing import Self
 
 # Third party
@@ -12,18 +13,18 @@ class General(IndexSampler):
     """Wrapper around [grain.samplers.IndexSampler][]."""
 
     @classmethod
-    def from_df(
+    def from_dfs(
         cls,
-        df: pl.DataFrame,
+        dfs: Sequence[pl.DataFrame],
         seed: int | None = None,
         shuffle: bool = False,
         num_epochs: int | None = None,
-    ) -> tuple[Self, pl.DataFrame]:
+    ) -> tuple[Self, Sequence[pl.DataFrame]]:
         """
-        Build an index sampler from a data frame.
+        Build an index sampler from data frames.
 
         Args:
-            df: Input data frame.
+            dfs: Input data frames.
             seed: Random seed.
             shuffle: Whether to globally shuffle the dataset.
             num_epochs: Number of epochs to repeat the dataset,
@@ -31,15 +32,15 @@ class General(IndexSampler):
 
         Returns:
             Newly built sampler instance.
-            Potentially updated data frame.
+            Potentially updated data frames.
         """
         sampler = cls(
-            num_records=len(df),
+            num_records=sum(map(len, dfs)),
             seed=seed,
             shuffle=shuffle,
             num_epochs=num_epochs,
         )
-        return (sampler, df)
+        return (sampler, dfs)
 
 
 __all__ = ["General"]

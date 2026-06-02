@@ -1,6 +1,7 @@
 """Sequential sampler from [grain.samplers][]."""
 
 # Standard
+from collections.abc import Sequence
 from typing import Self
 
 # Third party
@@ -12,24 +13,24 @@ class Sequential(SequentialSampler):
     """Wrapper around [grain.samplers.SequentialSampler][]."""
 
     @classmethod
-    def from_df(
+    def from_dfs(
         cls,
-        df: pl.DataFrame,
+        dfs: Sequence[pl.DataFrame],
         seed: int | None = None,
-    ) -> tuple[Self, pl.DataFrame]:
+    ) -> tuple[Self, Sequence[pl.DataFrame]]:
         """
-        Build a sequential sampler from a data frame.
+        Build a sequential sampler from data frames.
 
         Args:
-            df: Input data frame.
+            dfs: Input data frames.
             seed: Random seed.
 
         Returns:
             Newly built sampler instance.
-            Potentially updated data frame.
+            Potentially updated data frames.
         """
-        sampler = cls(num_records=len(df), seed=seed)
-        return (sampler, df)
+        sampler = cls(num_records=sum(map(len, dfs)), seed=seed)
+        return (sampler, dfs)
 
 
 __all__ = ["Sequential"]
