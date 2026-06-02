@@ -10,7 +10,6 @@ import jax
 import jax.numpy as jnp
 
 # Dax
-from jadzia.core.dependency.identifier import Identifier
 from jadzia.nn.loss.masking import apply_mask, build_mask
 
 
@@ -27,13 +26,13 @@ class CompositeLossTerm(NamedTuple):
 
     module: Callable[..., jax.Array]
     weight: float
-    prediction_names: tuple[Identifier, ...]
-    reference_names: tuple[Identifier, ...]
+    prediction_names: tuple[str, ...]
+    reference_names: tuple[str, ...]
 
     def __call__(
         self,
-        predictions: dict[Identifier, jax.Array],
-        references: dict[Identifier, jax.Array],
+        predictions: dict[str, jax.Array],
+        references: dict[str, jax.Array],
     ) -> jax.Array:
         """
         Compute the loss term value, including the weight.
@@ -81,8 +80,8 @@ class CompositeLoss(eqx.Module):
 
     def __call__(
         self,
-        predictions: dict[Identifier, jax.Array],
-        references: dict[Identifier, jax.Array],
+        predictions: dict[str, jax.Array],
+        references: dict[str, jax.Array],
     ) -> jax.Array:
         """
         Compute and combine all loss term values.

@@ -1,15 +1,12 @@
 """Composite model."""
 
 # Standard
-from collections.abc import Callable, Sequence
+from collections.abc import Callable
 from typing import NamedTuple, cast
 
 # Third party
 import equinox as eqx
 import jax
-
-# Dax
-from jadzia.core.dependency.identifier import Identifier
 
 
 class CompositeModelBlock(NamedTuple):
@@ -23,23 +20,8 @@ class CompositeModelBlock(NamedTuple):
     """
 
     name: str
-    input_names: tuple[Identifier, ...]
+    input_names: tuple[str, ...]
     output_names: tuple[str, ...]
-
-    def bind(self, outputs: Sequence[jax.Array]) -> dict[Identifier, jax.Array]:
-        """
-        Bind a sequence of output values to identifiers.
-
-        Args:
-            outputs: Output values to bind.
-
-        Returns:
-            Dictionary of bound output values.
-        """
-        return {
-            Identifier(self.name, name): value
-            for name, value in zip(self.output_names, outputs, strict=True)
-        }
 
 
 class CompositeModel(eqx.Module):
@@ -61,18 +43,14 @@ class CompositeModel(eqx.Module):
             state: Updated state.
         """
 
-        outputs: dict[Identifier, jax.Array]
+        outputs: dict[str, jax.Array]
         state: eqx.nn.State
 
     modules: dict[str, eqx.Module]
     blocks: tuple[CompositeModelBlock, ...]
-    outputs: tuple[Identifier, ...]
+    outputs: tuple[str, ...]
 
-    def __call__(
-        self,
-        inputs: dict[Identifier, jax.Array],
-        state: eqx.nn.State,
-    ) -> ReturnType:
+    def __call__(self, inputs: dict[str, jax.Array], state: eqx.nn.State) -> ReturnType:
         """
         Compute all blocks in their defined order.
 
@@ -96,7 +74,8 @@ class CompositeModel(eqx.Module):
             if isinstance(module_outputs, jax.Array):
                 module_outputs = (module_outputs,)
 
-            arrays.update(block.bind(module_outputs))
+            updates = dict(zip(block.output_names, module_outputs, strict=True))
+            arrays.update(updates)
 
         outputs = {output: arrays[output] for output in self.outputs}
         return self.ReturnType(outputs, state)

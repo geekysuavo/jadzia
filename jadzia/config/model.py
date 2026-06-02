@@ -108,8 +108,8 @@ class CompositeModel(MappingConfig[Block]):
         blocks = tuple(
             CompositeModelBlock(
                 name=name,
-                input_names=self[name].input_names,
-                output_names=self[name].output_names,
+                input_names=tuple(map(str, self[name].input_names)),
+                output_names=tuple(map(str, Identifier.from_outputs(name, self[name]))),
             )
             for name in self._block_order(self._block_names(outputs))
         )

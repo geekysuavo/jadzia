@@ -7,7 +7,6 @@ import jax.numpy as jnp
 import jax.random as jr
 
 # Dax
-from jadzia.core.dependency.identifier import Identifier
 from jadzia.nn.model import CompositeModel, CompositeModelBlock
 
 
@@ -24,26 +23,26 @@ def test_composite_model():
     blocks = (
         CompositeModelBlock(
             name="proj",
-            input_names=(Identifier("src", "x"),),
-            output_names=("output",),
+            input_names=("src.x",),
+            output_names=("proj.output",),
         ),
         CompositeModelBlock(
             name="norm",
-            input_names=(Identifier("src", "y"),),
-            output_names=("output",),
+            input_names=("src.y",),
+            output_names=("norm.output",),
         ),
     )
 
-    outputs = (Identifier("proj", "output"), Identifier("norm", "output"))
+    outputs = ("proj.output", "norm.output")
 
     model = CompositeModel(modules, blocks, outputs)
     (model, state) = eqx.nn.make_with_state(lambda: model)()
     batch_model = jax.jit(jax.vmap(model, axis_name="batch", in_axes=(0, None)))
 
-    inputs = {Identifier("src", "x"): x, Identifier("src", "y"): y}
+    inputs = {"src.x": x, "src.y": y}
     (outputs, new_state) = batch_model(inputs, state)
-    assert outputs[Identifier("proj", "output")].shape == (4, 1)
-    assert outputs[Identifier("norm", "output")].shape == (4, 3)
+    assert outputs["proj.output"].shape == (4, 1)
+    assert outputs["norm.output"].shape == (4, 3)
     assert isinstance(new_state, eqx.nn.State)
 
     def loss_fn(model, inputs, state):

@@ -43,8 +43,8 @@ class CompositeLoss(MappingConfig[LossFunction]):
         terms = tuple(
             CompositeLossTerm(
                 weight=self[name].weight,
-                prediction_names=self[name].prediction_names,
-                reference_names=self[name].reference_names,
+                prediction_names=tuple(map(str, self[name].prediction_names)),
+                reference_names=tuple(map(str, self[name].reference_names)),
                 module=cast(Callable, self[name].build_instance()),
             )
             for name in sorted(self)
