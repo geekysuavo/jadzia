@@ -17,12 +17,12 @@ class ArchiveMapping(NamedTuple):
     Attributes:
         archive: Name of the archive (`archives` dictionary key).
         source_key: Data frame column holding keys into the archive.
-        dest_key: Optional data frame column to place archive values into.
+        dest_key: Data frame column to place archive values into.
     """
 
     archive: str
     source_key: str
-    dest_key: str | None = None
+    dest_key: str
 
 
 class DataSource:
@@ -84,7 +84,7 @@ class DataSource:
         for mapping in self._mappings[df_key]:
             archive_key = row[mapping.source_key]
             archive_value = self._archives[mapping.archive][archive_key]
-            row[mapping.dest_key or mapping.source_key] = archive_value
+            row[mapping.dest_key] = archive_value
 
         return row
 

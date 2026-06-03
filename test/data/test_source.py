@@ -41,7 +41,7 @@ def test_data_source(tmp_path, emplace):
     mapping = ArchiveMapping(
         archive="arch",
         source_key="y",
-        dest_key=None if emplace else "z",
+        dest_key="y" if emplace else "z",
     )
 
     source = DataSource(
