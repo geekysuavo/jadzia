@@ -2,6 +2,7 @@
 
 # Standard
 from abc import abstractmethod
+from collections.abc import Sequence
 from typing import Any, Literal, overload
 
 # Third party
@@ -166,6 +167,9 @@ class Filter(_Base, grain.transforms.Filter):
 type Transformation = Map | MapWithIndex | RandomMap | NumpyRandomMap | Filter
 """Dataclasses implementing a [grain.transforms.Transformation][]."""
 
+type Transformations = Sequence[Transformation]
+"""Sequence of one or more transformations."""
+
 __all__ = [
     "Filter",
     "Map",
@@ -173,4 +177,5 @@ __all__ = [
     "NumpyRandomMap",
     "RandomMap",
     "Transformation",
+    "Transformations",
 ]
