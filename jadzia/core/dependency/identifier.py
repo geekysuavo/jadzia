@@ -19,6 +19,18 @@ class Reserved(StrEnum):
     ID = "id"
     SOURCE = "source"
 
+    def __call__(self, output: str) -> "Identifier":
+        """
+        Build an identifier by combining this node name with an output name.
+
+        Args:
+            output: Output name.
+
+        Returns:
+            Identifier with this node name and the specified output name.
+        """
+        return Identifier(self.value, output)
+
 
 class Node(Protocol):
     """Node that indicates its inputs and outputs."""
