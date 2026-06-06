@@ -14,7 +14,8 @@ from jadzia.data.source import ArchiveMapping, DataSource
 
 
 @pytest.mark.parametrize("emplace", [True, False])
-def test_data_source(tmp_path, emplace):
+@pytest.mark.parametrize("insert_id", [True, False])
+def test_data_source(tmp_path, insert_id, emplace):
     """Data sources provide the expected interface and behavior."""
     num_rows = (10, 8)
     data_a = {
@@ -48,16 +49,24 @@ def test_data_source(tmp_path, emplace):
         dfs={"alpha": df_a, "beta": df_b},
         archives={"arch": archive},
         mappings={"alpha": [mapping], "beta": [mapping]},
+        insert_id=insert_id,
     )
 
     assert len(source) == sum(num_rows)
 
     expected_keys = set("ixy") if emplace else set("ixyz")
+    if insert_id:
+        expected_keys.add("id.manifest")
+
     for index in range(len(source)):
         row = source[index]
         assert set(row) == expected_keys
         assert row["i"] == index
         assert isinstance(row["x"], float)
+
+        if insert_id:
+            assert row["id.manifest"] == "alpha" if index < num_rows[0] else "beta"
+
         if emplace:
             assert isinstance(row["y"], int)
         else:

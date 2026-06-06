@@ -6,6 +6,7 @@ from itertools import accumulate
 from typing import Any, NamedTuple
 
 # Dax
+from jadzia.core.dependency.identifier import Reserved
 from jadzia.data.archive import DataArchive
 from jadzia.data.sharedmemory import SharedDataFrame
 
@@ -33,6 +34,8 @@ class DataSource:
         dfs: dict[str, SharedDataFrame],
         archives: dict[str, DataArchive],
         mappings: dict[str, list[ArchiveMapping]],
+        *,
+        insert_id: bool = False,
     ):
         """
         Initialize the data source.
@@ -41,10 +44,12 @@ class DataSource:
             dfs: Named shared memory data frames.
             archives: Named on-disk data archives.
             mappings: Mapping from data frames to associated archives.
+            insert_id: When true, include extra provenance identifiers in each row.
         """
         self._dfs = dfs
         self._archives = archives
         self._mappings = mappings
+        self._insert_id = insert_id
 
         self._keys = tuple(sorted(dfs))
         self._sizes = tuple(len(dfs[key]) for key in self._keys)
@@ -85,6 +90,9 @@ class DataSource:
             archive_key = row[mapping.source_key]
             archive_value = self._archives[mapping.archive][archive_key]
             row[mapping.dest_key] = archive_value
+
+        if self._insert_id:
+            row[f"{Reserved.ID}.manifest"] = df_key
 
         return row
 
