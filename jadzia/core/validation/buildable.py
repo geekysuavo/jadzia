@@ -1,7 +1,7 @@
 """Validation base class for buildable objects."""
 
 # Standard
-from typing import Any, ClassVar, Self, TypeVar
+from typing import Any, ClassVar, Self
 
 # Third party
 from pydantic import create_model
@@ -10,14 +10,12 @@ from pydantic import create_model
 from jadzia.core.validation.base import Config
 from jadzia.core.validation.inspect import inspect_initializer
 
-InstanceT = TypeVar("InstanceT")
-
 
 class Exclude:
     """Sentinel class used to exclude fields when building instances."""
 
 
-class BuildableConfig[InstanceT](Config):
+class BuildableConfig[InstanceT: Any](Config):
     """Base class for all validated configurations of buildable objects."""
 
     instance_type: ClassVar[type]

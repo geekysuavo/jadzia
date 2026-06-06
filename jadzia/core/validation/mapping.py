@@ -12,12 +12,12 @@ from jadzia.core.dependency.identifier import Identifier, Node
 from jadzia.core.validation.base import Config
 
 
-class MappingConfig[T: Config](RootModel[dict[str, T]]):
+class MappingConfig[ValueT: Config](RootModel[dict[str, ValueT]]):
     """Mapping that holds configuration classes as values."""
 
     model_config = ConfigDict(frozen=True)
 
-    root: dict[str, T]
+    root: dict[str, ValueT]
 
     def __len__(self) -> int:
         """
@@ -49,7 +49,7 @@ class MappingConfig[T: Config](RootModel[dict[str, T]]):
         """
         return key in self.root
 
-    def __getitem__(self, key: str) -> T:
+    def __getitem__(self, key: str) -> ValueT:
         """
         Get a mapping configuration entry.
 
@@ -68,16 +68,16 @@ class MappingConfig[T: Config](RootModel[dict[str, T]]):
         """Iterate over mapping keys."""
         return self.root.keys()
 
-    def values(self) -> Iterable[T]:
+    def values(self) -> Iterable[ValueT]:
         """Iterate over mapping values."""
         return self.root.values()
 
-    def items(self) -> Iterable[tuple[str, T]]:
+    def items(self) -> Iterable[tuple[str, ValueT]]:
         """Iterate over mapping key-value pairs."""
         return self.root.items()
 
 
-class NodeMappingConfig[T: Config](MappingConfig[T]):
+class NodeMappingConfig[ValueT: Config](MappingConfig[ValueT]):
     """Mapping that holds a directed acyclic graph of configuration classes."""
 
     class NodeNames(NamedTuple):

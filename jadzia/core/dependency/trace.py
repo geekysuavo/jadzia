@@ -4,21 +4,24 @@
 from collections.abc import Callable, Iterable, Iterator
 from typing import Any, Self
 
-type TraceCallback = Callable[[set[str]], None]
+# Dax
+from jadzia.core.dependency.identifier import Identifier
+
+type TraceCallback[KeyT: str | Identifier] = Callable[[set[KeyT]], None]
 """Type of callback function that is executed by `Trace.traverse`."""
 
 
-class Trace:
+class Trace[KeyT: str | Identifier]:
     """Node in a tree of input data requirements."""
 
     def __init__(
         self,
         obj: Any,
         *,
-        requires: Iterable[str | None] = (),
-        inserts: Iterable[str | None] = (),
-        removes: Iterable[str | None] = (),
-        callback: TraceCallback | None = None,
+        requires: Iterable[KeyT | None] = (),
+        inserts: Iterable[KeyT | None] = (),
+        removes: Iterable[KeyT | None] = (),
+        callback: TraceCallback[KeyT] | None = None,
         parent: Self | None = None,
     ):
         """
@@ -77,7 +80,7 @@ class Trace:
         """
         return len(self._names)
 
-    def __iter__(self) -> Iterator[str]:
+    def __iter__(self) -> Iterator[KeyT]:
         """
         Iterate over the traced name set.
 
@@ -86,7 +89,7 @@ class Trace:
         """
         return iter(self._names)
 
-    def __contains__(self, name: str) -> bool:
+    def __contains__(self, name: KeyT) -> bool:
         """
         Whether the traced name set contains a given value.
 
@@ -102,10 +105,10 @@ class Trace:
         self,
         obj: Any,
         *,
-        requires: Iterable[str | None] = (),
-        inserts: Iterable[str | None] = (),
-        removes: Iterable[str | None] = (),
-        callback: TraceCallback | None = None,
+        requires: Iterable[KeyT | None] = (),
+        inserts: Iterable[KeyT | None] = (),
+        removes: Iterable[KeyT | None] = (),
+        callback: TraceCallback[KeyT] | None = None,
     ) -> Self:
         """
         Create, attach, and return a child node.
@@ -138,7 +141,7 @@ class Trace:
 
         return root
 
-    def traverse(self) -> set[str]:
+    def traverse(self) -> set[KeyT]:
         """
         Perform a depth-first traversal of the traced dependency tree.
 
@@ -185,9 +188,9 @@ class Trace:
         if not missing:
             return
 
-        available_str = ", ".join(sorted(available))
-        required_str = ", ".join(sorted(required))
-        missing_str = ", ".join(sorted(missing))
+        available_str = ", ".join(map(str, sorted(available)))
+        required_str = ", ".join(map(str, sorted(required)))
+        missing_str = ", ".join(map(str, sorted(missing)))
 
         raise ValueError(
             f"failed to trace data flow:\n"

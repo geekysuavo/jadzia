@@ -4,11 +4,14 @@
 from collections.abc import Iterable, Iterator, Mapping
 from typing import Any
 
+# Dax
+from jadzia.core.dependency.identifier import Identifier
 
-class Graph:
+
+class Graph[NodeT: str | Identifier]:
     """A directed acyclic graph (DAG) of execution dependencies."""
 
-    def __init__(self, dependencies: Mapping[str, Iterable[str]] | None = None):
+    def __init__(self, dependencies: Mapping[NodeT, Iterable[NodeT]] | None = None):
         """
         Initialize the dependency graph.
 
@@ -43,7 +46,7 @@ class Graph:
         """
         return len(self._deps)
 
-    def __iter__(self) -> Iterator[str]:
+    def __iter__(self) -> Iterator[NodeT]:
         """
         Iterate over graph nodes.
 
@@ -52,7 +55,7 @@ class Graph:
         """
         return iter(self._deps)
 
-    def __contains__(self, node: str) -> bool:
+    def __contains__(self, node: NodeT) -> bool:
         """
         Whether the graph contains a given node.
 
@@ -64,7 +67,7 @@ class Graph:
         """
         return node in self._deps
 
-    def __getitem__(self, node: str) -> set[str]:
+    def __getitem__(self, node: NodeT) -> set[NodeT]:
         """
         Get the dependencies of a graph node.
 
@@ -79,7 +82,7 @@ class Graph:
         """
         return self._deps[node]
 
-    def __setitem__(self, node: str, deps: Iterable[str]):
+    def __setitem__(self, node: NodeT, deps: Iterable[NodeT]):
         """
         Set the dependencies of a graph node.
 
@@ -95,7 +98,7 @@ class Graph:
         extra_nodes = depset - set(self._deps)
         self._deps.update({other: set() for other in extra_nodes})
 
-    def __delitem__(self, node: str):
+    def __delitem__(self, node: NodeT):
         """
         Remove a graph node.
 
@@ -111,7 +114,7 @@ class Graph:
         del self._deps[node]
         self._deps = {other: deps - {node} for other, deps in self._deps.items()}
 
-    def update(self, node: str, *deps: str):
+    def update(self, node: NodeT, *deps: NodeT):
         """
         Add dependencies to a graph node.
 
@@ -126,7 +129,7 @@ class Graph:
         self[node] = self._deps.get(node, set()) | set(deps)
 
     @property
-    def dependencies(self) -> tuple[tuple[str, tuple[str, ...]], ...]:
+    def dependencies(self) -> tuple[tuple[NodeT, tuple[NodeT, ...]], ...]:
         """Canonicalized immutable form of the dependency graph."""
         items = sorted(
             (node, tuple(sorted(deps)))
@@ -135,7 +138,7 @@ class Graph:
         )
         return tuple(items)
 
-    def sort_nodes(self, subset: Iterable[str] | None = None) -> tuple[str, ...]:
+    def sort_nodes(self, subset: Iterable[NodeT] | None = None) -> tuple[NodeT, ...]:
         """
         Topologically sort graph nodes or a subset of graph nodes.
 
@@ -151,16 +154,16 @@ class Graph:
         deps = self.dependencies
 
         unvisited = sorted(subset or self)
-        visited: list[str] = []
-        marked: list[str] = []
-        order: list[str] = []
+        visited: list[NodeT] = []
+        marked: list[NodeT] = []
+        order: list[NodeT] = []
 
-        def visit(node: str):
+        def visit(node: NodeT):
             if node in visited:
                 return
             elif node in marked:
                 graph_lines = [
-                    f"  - {node} : {', '.join(sorted(deps))}"
+                    f"  - {node} : {', '.join(map(str, sorted(deps)))}"
                     for node, deps in self._deps.items()
                 ]
                 graph_str = "\n".join(graph_lines)
