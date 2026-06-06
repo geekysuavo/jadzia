@@ -3,7 +3,6 @@
 # Standard
 import contextlib
 import ctypes
-import hashlib
 import time
 from multiprocessing.shared_memory import SharedMemory
 from typing import Any, Self
@@ -12,6 +11,7 @@ from typing import Any, Self
 import polars as pl
 
 # Dax
+from jadzia.core.hashing import hash_df
 from jadzia.data.serialization import dumps, loads
 
 _INDEX_SIZE: int = ctypes.sizeof(ctypes.c_size_t)
@@ -47,28 +47,6 @@ class _SharedDataFrameIterator:
         item = self._source[self._index]
         self._index += 1
         return item
-
-
-def _hash_df(df: pl.DataFrame) -> str:
-    """
-    Build a checksum from a data frame.
-
-    Args:
-        df: Data frame to hash.
-
-    Returns:
-        Hex checksum of the data frame.
-    """
-    hasher = hashlib.sha256()
-
-    for column, dtype in df.schema.items():
-        hasher.update(column.encode())
-        hasher.update(str(dtype).encode())
-
-    for row_hash in df.hash_rows():
-        hasher.update(row_hash.to_bytes(64))
-
-    return hasher.hexdigest()[:16]
 
 
 def _item_size(item: tuple) -> int:
@@ -110,7 +88,7 @@ class SharedDataFrame:
         self._keys = tuple(df.columns)
 
         if name is None:
-            name = _hash_df(df)
+            name = hash_df(df, length=16)
 
         if not create:
             self._attach(name)
