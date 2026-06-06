@@ -9,13 +9,13 @@ from jadzia.config.transform import Transform
 
 config_adapter = TypeAdapter(Transform)
 config_data = [
-    {"type": "Insert", "inputs": {}, "value": 1},
-    {"type": "InsertCopy", "inputs": {"source": "a.b"}},
-    {"type": "InsertFromSequence", "inputs": {}, "values": ("x", "y")},
-    {"type": "InsertRandomChoice", "inputs": {}, "values": ("x", "y")},
-    {"type": "InsertRandomInteger", "inputs": {}},
-    {"type": "InsertRandomUniform", "inputs": {}},
-    {"type": "Unary", "inputs": {"x": "a.b"}, "function": "math.sin"},
+    {"type": "Insert", "value": 1},
+    {"type": "InsertCopy", "input": "a.b"},
+    {"type": "InsertFromSequence", "values": ("x", "y")},
+    {"type": "InsertRandomChoice", "values": ("x", "y")},
+    {"type": "InsertRandomInteger"},
+    {"type": "InsertRandomUniform"},
+    {"type": "Unary", "input": "a.b", "function": "math.sin"},
 ]
 
 
@@ -29,10 +29,10 @@ def test_transform_configs(data):
 
 def test_validators():
     """Transformation configurations validate their fields."""
-    invalid_data = {"type": "InsertRandomInteger", "inputs": {}, "upper": 0}
+    invalid_data = {"type": "InsertRandomInteger", "upper": 0}
     with pytest.raises(ValueError, match="lower bound must be less"):
         config_adapter.validate_python(invalid_data)
 
-    invalid_data = {"type": "InsertRandomUniform", "inputs": {}, "upper": 0}
+    invalid_data = {"type": "InsertRandomUniform", "upper": 0}
     with pytest.raises(ValueError, match="lower bound must be less"):
         config_adapter.validate_python(invalid_data)

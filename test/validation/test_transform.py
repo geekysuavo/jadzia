@@ -15,6 +15,11 @@ from jadzia.core.validation.transform import TransformConfig, TransformSignature
 from jadzia.data.transform.base import Map, MapWithIndex, RandomMap
 
 
+class Answer(Map):
+    def __call__(self) -> int:
+        return 42
+
+
 class Multiply(Map):
     n: PositiveInt
 
@@ -57,6 +62,24 @@ class InvalidRng(RandomMap):
     def __call__(self, rng: Generator, /) -> int: ...
 
 
+def test_map_no_input():
+    """Inspection of map transformations produces the expected result."""
+    config_cls = TransformConfig.auto(Answer)
+    assert issubclass(config_cls, TransformConfig)
+    assert config_cls.instance_call.requires_index is False
+    assert config_cls.instance_call.requires_rng is False
+
+    config = config_cls()
+    assert config.input_names == ()
+    assert config.output_names == ("output",)
+
+    with pytest.raises(ValueError, match="accepts no inputs"):
+        config_cls(input="a.b")
+
+    with pytest.raises(ValueError, match="accepts no inputs"):
+        config_cls(inputs={"x": "a.b"})
+
+
 def test_map_single_output():
     """Inspection of map transformations produces the expected result."""
     config_cls = TransformConfig.auto(Multiply)
@@ -64,7 +87,7 @@ def test_map_single_output():
     assert config_cls.instance_call.requires_index is False
     assert config_cls.instance_call.requires_rng is False
 
-    config = config_cls(inputs={"x": "tform.result"}, n=2)
+    config = config_cls(input="tform.result", n=2)
     assert config.input_names == (Identifier("tform", "result"),)
     assert config.output_names == ("output",)
 
@@ -76,17 +99,14 @@ def test_map_single_output():
     with pytest.raises(ValueError, match="Field required"):
         config_cls()
 
-    with pytest.raises(ValueError, match="Field required"):
+    with pytest.raises(ValueError, match="requires exactly one"):
         config_cls(n=4)
 
     with pytest.raises(ValueError, match="Field required"):
-        config_cls(inputs={"x": "a.b"})
+        config_cls(input="a.b")
 
-    with pytest.raises(ValueError, match="missing transformation call inputs"):
+    with pytest.raises(ValueError, match="requires an `input`"):
         config_cls(inputs={}, n=1)
-
-    with pytest.raises(ValueError, match="extra transformation call inputs"):
-        config_cls(inputs={"x": "a.b", "unused": "c.d"}, n=1)
 
 
 def test_map_with_index():
@@ -96,7 +116,7 @@ def test_map_with_index():
     assert config_cls.instance_call.requires_index is True
     assert config_cls.instance_call.requires_rng is False
 
-    config = config_cls(inputs={"z": "tform.res"})
+    config = config_cls(input="tform.res")
     assert config.input_names == (Identifier("tform", "res"),)
     assert config.output_names == ("output",)
 
@@ -125,6 +145,12 @@ def test_map_multi_output():
     assert obj.input_names == ("first.out", "second.out")
     assert obj.output_names == ("rot.arot", "rot.brot")
 
+    with pytest.raises(ValueError, match="requires `inputs`"):
+        config_cls(input="a.b")
+
+    with pytest.raises(ValueError, match="invalid transformation call inputs"):
+        config_cls(inputs={"c": "third.out"})
+
 
 def test_random_map():
     """Inspection of random map transformations produces the expected result."""
@@ -133,7 +159,7 @@ def test_random_map():
     assert config_cls.instance_call.requires_index is False
     assert config_cls.instance_call.requires_rng is True
 
-    config = config_cls(inputs={"p": "tf.rv"})
+    config = config_cls(input="tf.rv")
     assert config.input_names == (Identifier("tf", "rv"),)
     assert config.output_names == ("output",)
 

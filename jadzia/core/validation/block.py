@@ -171,7 +171,7 @@ class FissionBlock(SimpleBlock):
         if len(fields) == 1:
             raise ValueError(
                 f"fission block class {type(self).__name__} requires "
-                f"exactly one of `outputs` and `num_outputs` to be specified"
+                "exactly one of `outputs` and `num_outputs` to be specified"
             )
         else:
             return self

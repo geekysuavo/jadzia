@@ -65,14 +65,16 @@ class TransformConfig(BuildableConfig[Transformation]):
     Transformation configuration base class.
 
     Attributes:
+        input: Input name in `tform.output` format. Mutually exclusive with `inputs`.
         inputs: Mapping from transform call method argument names to input names
-            in `tform.output` format.
+            in `tform.output` format. Mutually exclusive with `input`.
     """
 
     instance_type: ClassVar[type[Transformation]]
     instance_call: ClassVar[TransformSignature]
 
-    inputs: Annotated[dict[str, IdentifierStr], Exclude]
+    input: Annotated[IdentifierStr | None, Exclude] = None
+    inputs: Annotated[dict[str, IdentifierStr] | None, Exclude] = None
 
     def build_instance(  # ty: ignore[invalid-method-override]
         self,
@@ -100,8 +102,13 @@ class TransformConfig(BuildableConfig[Transformation]):
     @property
     def input_names(self) -> tuple[Identifier, ...]:
         """Names of other outputs that are passed as inputs to this transformation."""
-        original_names = self.instance_call.inputs
-        return tuple(self.inputs[name] for name in original_names)
+        if self.input is not None:
+            return (self.input,)
+        elif self.inputs is not None:
+            original_names = self.instance_call.inputs
+            return tuple(self.inputs[name] for name in original_names)
+        else:
+            return ()
 
     @property
     def output_names(self) -> tuple[str, ...]:
@@ -129,22 +136,41 @@ class TransformConfig(BuildableConfig[Transformation]):
     @model_validator(mode="after")
     def _validate_input_names(self) -> Self:
         """Ensure the required number and kind of inputs is provided."""
-        supplied_names = set(self.inputs)
-        required_names = set(self.instance_call.inputs)
-        missing_names = required_names - supplied_names
-        extra_names = supplied_names - required_names
-        if missing_names:
+        fields = {self.input is not None, self.inputs is not None}
+        if self.instance_call.inputs == () and fields != {False}:
             raise ValueError(
-                f"missing transformation call inputs in {type(self).__name__}: "
-                f"({', '.join(missing_names)})"
+                f"transformation class {type(self).__name__} accepts no inputs, "
+                "but inputs were specified"
             )
-        elif extra_names:
+        elif self.instance_call.inputs and len(fields) == 1:
             raise ValueError(
-                f"extra transformation call inputs in {type(self).__name__}: "
-                f"({', '.join(extra_names)})"
+                f"transformation class {type(self).__name__} requires "
+                "exactly one of `input` and `inputs` to be specified"
             )
-        else:
-            return self
+        elif len(self.instance_call.inputs) == 1 and self.input is None:
+            raise ValueError(
+                f"transformation class {type(self).__name__} requires "
+                "an `input` to be specified"
+            )
+        elif len(self.instance_call.inputs) > 1 and self.inputs is None:
+            raise ValueError(
+                f"transformation class {type(self).__name__} requires "
+                "`inputs` to be specified"
+            )
+
+        if self.inputs is not None:
+            supplied_names = set(self.inputs)
+            required_names = set(self.instance_call.inputs)
+            missing_names = required_names - supplied_names
+            extra_names = supplied_names - required_names
+            if missing_names or extra_names:
+                raise ValueError(
+                    f"invalid transformation call inputs in {type(self).__name__}; "
+                    f"missing: ({', '.join(missing_names)}), "
+                    f"extra: ({', '.join(extra_names)})"
+                )
+
+        return self
 
 
 __all__ = ["TransformConfig", "TransformSignature"]
