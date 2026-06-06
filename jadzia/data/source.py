@@ -3,7 +3,7 @@
 # Standard
 from bisect import bisect_right
 from itertools import accumulate
-from typing import Any, NamedTuple
+from typing import Any, ClassVar, NamedTuple
 
 # Dax
 from jadzia.core.dependency.identifier import Reserved
@@ -28,6 +28,8 @@ class ArchiveMapping(NamedTuple):
 
 class DataSource:
     """Random-access data source combining shared data frames and archives."""
+
+    MANIFEST_KEY: ClassVar[str] = "manifest"
 
     def __init__(
         self,
@@ -92,7 +94,7 @@ class DataSource:
             row[mapping.dest_key] = archive_value
 
         if self._insert_id:
-            row[f"{Reserved.ID}.manifest"] = df_key
+            row[f"{Reserved.ID}.{self.MANIFEST_KEY}"] = df_key
 
         return row
 
