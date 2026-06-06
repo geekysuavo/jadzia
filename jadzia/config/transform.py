@@ -6,6 +6,7 @@ from typing import Annotated, ClassVar, Self
 
 # Third party
 from pydantic import (
+    Field,
     PositiveFloat,
     StrictBool,
     StrictFloat,
@@ -16,6 +17,8 @@ from pydantic import (
 
 # Dax
 import jadzia.data.transform.auxiliary as aux
+import jadzia.data.transform.general as gen
+from jadzia.core.validation.function import FunctionStr
 from jadzia.core.validation.transform import TransformConfig, TransformSignature
 from jadzia.core.validation.union import UnionDiscriminator, UnionSerializer
 from jadzia.data.transform.base import Transformation
@@ -104,13 +107,27 @@ class InsertRandomUniform(TransformConfig):
             raise ValueError("lower bound must be less than upper bound")
 
 
+class Unary(TransformConfig):
+    """Configuration for [jadzia.data.transform.general.Unary][]."""
+
+    instance_type: ClassVar[type[Transformation]] = gen.Unary
+    instance_call: ClassVar[TransformSignature] = TransformSignature.from_type(
+        gen.Unary
+    )
+
+    function: FunctionStr
+    args: Annotated[tuple[gen.Arg, ...], Field(default_factory=tuple)]
+    kwargs: Annotated[dict[str, gen.Arg], Field(default_factory=dict)]
+
+
 type Transform = Annotated[
     Annotated[Insert, Tag("Insert")]
     | Annotated[InsertCopy, Tag("InsertCopy")]
     | Annotated[InsertFromSequence, Tag("InsertFromSequence")]
     | Annotated[InsertRandomChoice, Tag("InsertRandomChoice")]
     | Annotated[InsertRandomInteger, Tag("InsertRandomInteger")]
-    | Annotated[InsertRandomUniform, Tag("InsertRandomUniform")],
+    | Annotated[InsertRandomUniform, Tag("InsertRandomUniform")]
+    | Annotated[Unary, Tag("Unary")],
     UnionDiscriminator(),
     UnionSerializer(),
 ]

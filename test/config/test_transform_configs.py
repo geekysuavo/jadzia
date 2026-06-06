@@ -15,6 +15,7 @@ config_data = [
     {"type": "InsertRandomChoice", "inputs": {}, "values": ("x", "y")},
     {"type": "InsertRandomInteger", "inputs": {}},
     {"type": "InsertRandomUniform", "inputs": {}},
+    {"type": "Unary", "inputs": {"x": "a.b"}, "function": "math.sin"},
 ]
 
 
