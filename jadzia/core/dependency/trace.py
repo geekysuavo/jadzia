@@ -200,4 +200,4 @@ class Trace[KeyT: str | Identifier]:
         )
 
 
-__all__ = ["Trace"]
+__all__ = ["Trace", "TraceCallback"]
