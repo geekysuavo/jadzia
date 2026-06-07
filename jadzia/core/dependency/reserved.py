@@ -11,10 +11,12 @@ class Reserved(StrEnum):
     """
     Enumeration of reserved node names.
 
+    - `*`: Wildcard used to gather node outputs together.
     - `id`: Identifying data inserted by the data source.
     - `source`: Value provided by the data source manifest or archives.
     """
 
+    ALL = "*"
     ID = "id"
     SOURCE = "source"
 
