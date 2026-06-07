@@ -5,10 +5,8 @@ from pathlib import Path
 from typing import Any, Self
 
 # Third party
+import yaml
 from pydantic import BaseModel, ConfigDict
-
-# Dax
-import jadzia.core.yaml as yaml
 
 
 class Config(BaseModel):

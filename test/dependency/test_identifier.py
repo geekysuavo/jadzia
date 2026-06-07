@@ -5,7 +5,7 @@ import pytest
 from pydantic import BaseModel
 
 # Dax
-from jadzia.core.dependency.identifier import Identifier, IdentifierStr
+from jadzia.core.dependency.identifier import Identifier, IdentifierStr, Reserved
 
 
 class ConfigCls(BaseModel):
@@ -16,14 +16,31 @@ class ConfigCls(BaseModel):
         return (self.ident.output,)
 
 
-@pytest.mark.parametrize("is_batch", [False, True])
-def test_string_conversion(is_batch):
+@pytest.mark.parametrize("output", ["foo", "bar"])
+@pytest.mark.parametrize("reserved", Reserved)
+def test_reserved(reserved, output):
+    """Identifiers may be built from reserved node names."""
+    example = reserved(output)
+    assert example == Identifier.from_str(f"{reserved}.{output}")
+
+
+@pytest.mark.parametrize("node", ["hello", "world"])
+def test_is_gather(node):
+    """Identifiers may be configured as "gather" nodes."""
+    example = Identifier.gather(node)
+    assert example == Identifier(node, Reserved.ALL)
+    assert example.is_gather is True
+
+    example = Identifier(node, "other")
+    assert example.is_gather is False
+
+
+def test_string_conversion():
     """Identifiers may be converted from strings."""
-    example = Identifier.from_str("foo.bar", is_batch=is_batch)
-    assert example == Identifier("foo", "bar", is_batch)
+    example = Identifier.from_str("foo.bar")
+    assert example == Identifier("foo", "bar")
     assert example.node == "foo"
     assert example.output == "bar"
-    assert example.is_batch == is_batch
 
     assert Identifier.from_str(example) is example
 
@@ -41,15 +58,6 @@ def test_conversion_to_string():
     """Identifiers may be converted to strings."""
     ident = Identifier("hello", "world")
     assert str(ident) == "hello.world"
-
-
-def test_batch_identifiers():
-    """Identifier attributes are parsed correctly."""
-    ident = Identifier("foo", "bar")
-    assert ident.is_batch is False
-
-    ident = Identifier("baz", "out", is_batch=True)
-    assert ident.is_batch is True
 
 
 def test_identifier_annotation():

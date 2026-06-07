@@ -7,23 +7,32 @@ import pytest
 from jadzia.core.dependency.graph import Graph
 
 
-def test_chain():
+@pytest.mark.parametrize("subset", [None, ("foo",)])
+def test_chain(subset):
     """Chain graphs produce correct execution orders."""
     deps = {"foo": ("bar",), "bar": ("baz",), "baz": ("zzz",), "zzz": ()}
-    assert Graph(deps).sort_nodes() == ("zzz", "baz", "bar", "foo")
+    assert Graph(deps).sort_nodes(subset) == ("zzz", "baz", "bar", "foo")
 
 
-def test_diamond():
+@pytest.mark.parametrize("subset", [None, ("foo",)])
+def test_diamond(subset):
     """Diamond graphs produce correct execution orders."""
     deps = {"foo": ("bar", "baz"), "bar": ("zzz",), "baz": ("zzz",), "zzz": ()}
-    assert Graph(deps).sort_nodes() == ("zzz", "baz", "bar", "foo")
+    assert Graph(deps).sort_nodes(subset) == ("zzz", "bar", "baz", "foo")
+
+
+def test_invalid_subset():
+    """Passing invalid subsets raises an exception."""
+    deps = {"foo": ("bar",), "bar": ()}
+    with pytest.raises(ValueError, match="graph does not contain"):
+        Graph(deps).sort_nodes(subset=("baz",))
 
 
 def test_cycle():
     """Cyclic graphs raise exceptions."""
     deps = {"a": ("b",), "b": ("a",)}
     graph = Graph(deps)
-    with pytest.raises(ValueError, match="dependencies do not form a DAG"):
+    with pytest.raises(ValueError, match="graph is not a DAG"):
         graph.sort_nodes()
 
 

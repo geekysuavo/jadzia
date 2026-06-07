@@ -1,7 +1,7 @@
 """Validated mapping classes."""
 
 # Standard
-from typing import Iterable, Iterator, NamedTuple, cast
+from typing import Iterable, Iterator, cast
 
 # Third party
 from pydantic import ConfigDict, RootModel
@@ -80,65 +80,15 @@ class MappingConfig[ValueT: Config](RootModel[dict[str, ValueT]]):
 class NodeMappingConfig[ValueT: Config](MappingConfig[ValueT]):
     """Mapping that holds a directed acyclic graph of configuration classes."""
 
-    class NodeNames(NamedTuple):
-        """
-        Summary of used, unused, and missing nodes and identifiers.
+    def add_subgraph(self, graph: Graph[Identifier]):
+        """Update a dependency graph with this configuration."""
+        for name, config in self.items():
+            node = Identifier.gather(name)
+            graph[node] = cast(Node, config).input_names
+            for output in Identifier.from_outputs(name, cast(Node, config)):
+                graph[output] = (node,)
 
-        Attributes:
-            used: Used node names.
-            unused: Unused node names.
-            missing: Missing node outputs.
-        """
-
-        used: set[str]
-        unused: set[str]
-        missing: set[Identifier]
-
-    @property
-    def output_names(self) -> tuple[Identifier, ...]:
-        """All outputs that are returned by the nodes."""
-        node_outputs = {
-            identifier
-            for name, node in self.items()
-            for identifier in Identifier.from_outputs(name, cast(Node, node))
-        }
-        return tuple(sorted(node_outputs))
-
-    def node_names(self, outputs: Iterable[Identifier] | None = None) -> NodeNames:
-        """
-        Determine the used, unused and missing nodes in the graph.
-
-        Args:
-            outputs: Optional required outputs. Defaults to all outputs.
-
-        Returns:
-            Information about which nodes are used, unused or missing.
-        """
-        outputs_to_check = set(outputs or self.output_names)
-        missing_outputs = set()
-        visited_nodes = set()
-
-        while outputs_to_check:
-            output = outputs_to_check.pop()
-            name = output.node
-
-            if name in visited_nodes:
-                continue
-
-            if (
-                name not in self
-                or output.output not in cast(Node, self[name]).output_names
-            ):
-                missing_outputs.add(output)
-                continue
-
-            visited_nodes.add(name)
-            outputs_to_check.update(cast(Node, self[name]).input_names)
-
-        unvisited_nodes = set(self) - visited_nodes
-        return self.NodeNames(visited_nodes, unvisited_nodes, missing_outputs)
-
-    def node_order(self, subset: Iterable[str] | None = None) -> tuple[str, ...]:
+    def node_order(self, subset: Iterable[Identifier] | None = None) -> tuple[str, ...]:
         """
         Determine the node execution order.
 
@@ -148,11 +98,17 @@ class NodeMappingConfig[ValueT: Config](MappingConfig[ValueT]):
         Returns:
             Sequence of node names in their execution order.
         """
-        deps = {
-            name: {dep.node for dep in cast(Node, config).input_names}
-            for name, config in self.items()
-        }
-        return Graph(deps).sort_nodes(subset)
+
+        def is_gather(identifier: Identifier) -> bool:
+            return identifier.is_gather
+
+        def to_node(identifier: Identifier) -> str:
+            return identifier.node
+
+        graph = Graph[Identifier]()
+        self.add_subgraph(graph)
+        nodes = graph.sort_nodes(subset)
+        return tuple(map(to_node, filter(is_gather, nodes)))
 
 
 __all__ = ["MappingConfig", "NodeMappingConfig"]

@@ -22,6 +22,16 @@ class Graph[NodeT: str | Identifier]:
         dependencies = dependencies or {}
         self._deps = {node: set(deps) for node, deps in dependencies.items()}
 
+    def __str__(self) -> str:
+        """String representation of the graph."""
+        lines = ["Graph("]
+        lines.extend(
+            f"  {node} : ({', '.join(map(str, sorted(deps)))})"
+            for node, deps in self._deps.items()
+        )
+        lines.append(")")
+        return "\n".join(lines)
+
     def __eq__(self, other: Any) -> bool:
         """
         Whether two graphs are equivalent.
@@ -143,16 +153,14 @@ class Graph[NodeT: str | Identifier]:
         Topologically sort graph nodes or a subset of graph nodes.
 
         Args:
-            subset: Subset of graph nodes. If unspecified, all nodes in the graph
-                will be used as outputs.
+            subset: Subset of required graph nodes used to initiate traversal.
+                If unspecified, all nodes in the graph will be required.
 
         Returns:
             Tuple of nodes in topologically sorted order. Visiting nodes in this order
                 will ensure that their dependencies are ready to use when they are
                 visited.
         """
-        deps = self.dependencies
-
         unvisited = sorted(subset or self)
         visited: list[NodeT] = []
         marked: list[NodeT] = []
@@ -162,15 +170,12 @@ class Graph[NodeT: str | Identifier]:
             if node in visited:
                 return
             elif node in marked:
-                graph_lines = [
-                    f"  - {node} : {', '.join(map(str, sorted(deps)))}"
-                    for node, deps in self._deps.items()
-                ]
-                graph_str = "\n".join(graph_lines)
-                raise ValueError(f"dependencies do not form a DAG:\n{graph_str}")
+                raise ValueError(f"graph is not a DAG:\n{self}")
+            elif node not in self:
+                raise ValueError(f"graph does not contain node: {node}")
 
             marked.append(node)
-            neighbors = sorted(nb for nb, nb_deps in deps if node in nb_deps)
+            neighbors = sorted(self[node])
             for neighbor in neighbors:
                 visit(neighbor)
 
@@ -182,7 +187,7 @@ class Graph[NodeT: str | Identifier]:
             node = unvisited.pop()
             visit(node)
 
-        return tuple(reversed(order))
+        return tuple(order)
 
 
 __all__ = ["Graph"]

@@ -12,13 +12,12 @@ from jadzia.core.dependency.identifier import Identifier
 
 @pytest.mark.parametrize("dag", [True, False])
 @pytest.mark.parametrize("unused_block", [False, True])
-@pytest.mark.parametrize("missing_input", [False, True])
-def test_model_config(missing_input, unused_block, dag):
+def test_model_config(unused_block, dag):
     """The composite model configuration validates and builds a module correctly."""
     config_data = {
         "blk_in": {
             "type": "Linear",
-            "input": Identifier.from_str("batch.feats", is_batch=True),
+            "input": "batch.feats",
             "num_input_features": 3,
             "num_output_features": 16,
         },
@@ -51,9 +50,6 @@ def test_model_config(missing_input, unused_block, dag):
     outputs = (Identifier("blk_out", "output"), Identifier("blk_cycle_b", "output"))
     key = jr.key(42)
 
-    if missing_input:
-        config_data["blk_out"]["input"] = "blk_oops.output"
-
     if not unused_block:
         del config_data["blk_extra"]
 
@@ -62,33 +58,19 @@ def test_model_config(missing_input, unused_block, dag):
         del config_data["blk_cycle_a"]
         del config_data["blk_cycle_b"]
 
-    if missing_input:
-        with pytest.raises(ValueError, match="block inputs are not satisfied"):
-            CompositeModel.model_validate(config_data)
-        return
+    config = CompositeModel.model_validate(config_data)
 
     if not dag:
-        with pytest.raises(ValueError, match="dependencies do not form a DAG"):
-            CompositeModel.model_validate(config_data)
-        return
-
-    config = CompositeModel.model_validate(config_data)
-    assert config.input_names == (Identifier("batch", "feats", is_batch=True),)
-    assert set(config.output_names) >= set(outputs)
-
-    if unused_block:
-        with pytest.raises(ValueError, match="blocks are unused"):
+        with pytest.raises(ValueError, match="graph is not a DAG"):
             config.build_instance(key, outputs=outputs)
         return
 
-    with pytest.raises(ValueError, match="missing outputs"):
-        config.build_instance(key, outputs=(Identifier("invalid", "id"),))
-
     with pytest.raises(ValueError, match="requires a key"):
-        config.build_instance()
+        config.build_instance(outputs=outputs)
 
     model = config.build_instance(key, outputs=outputs)
     assert isinstance(model, config.instance_type)
+    assert "blk_extra" not in model.modules
 
     (model, state) = config.build_instance(key, outputs=outputs, with_state=True)
     assert isinstance(model, config.instance_type)
@@ -100,19 +82,21 @@ def test_model_without_key():
     config = CompositeModel(
         split={
             "type": "UnstackFission",
-            "input": Identifier.from_str("batch.data", is_batch=True),
+            "input": "batch.data",
             "outputs": ["first", "second"],
             "axis": -1,
         },
     )
 
     key = jr.key(42)
-    with pytest.raises(ValueError, match="does not require a key"):
-        config.build_instance(key)
+    outputs = (Identifier("split", "first"),)
 
-    model = config.build_instance()
+    with pytest.raises(ValueError, match="does not require a key"):
+        config.build_instance(key, outputs=outputs)
+
+    model = config.build_instance(outputs=outputs)
     assert isinstance(model, config.instance_type)
 
-    (model, state) = config.build_instance(with_state=True)
+    (model, state) = config.build_instance(outputs=outputs, with_state=True)
     assert isinstance(model, config.instance_type)
     assert isinstance(state, eqx.nn.State)
