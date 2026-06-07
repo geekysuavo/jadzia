@@ -1,35 +1,10 @@
 """Identifier classes for dependency management."""
 
 # Standard
-from enum import StrEnum
 from typing import Annotated, NamedTuple, Protocol, Self
 
 # Third party
 from pydantic import AfterValidator, BeforeValidator, PlainSerializer
-
-
-class Reserved(StrEnum):
-    """
-    Enumeration of reserved node names.
-
-    - `id`: Identifying data inserted by the data source.
-    - `source`: Value provided by the data source manifest or archives.
-    """
-
-    ID = "id"
-    SOURCE = "source"
-
-    def __call__(self, output: str) -> "Identifier":
-        """
-        Build an identifier by combining this node name with an output name.
-
-        Args:
-            output: Output name.
-
-        Returns:
-            Identifier with this node name and the specified output name.
-        """
-        return Identifier(self.value, output)
 
 
 class Node(Protocol):
@@ -129,4 +104,4 @@ type BatchIdentifierStr = Annotated[
 ]
 """Type annotation for batch identifiers that may be coerced from strings."""
 
-__all__ = ["BatchIdentifierStr", "Identifier", "IdentifierStr", "Reserved"]
+__all__ = ["BatchIdentifierStr", "Identifier", "IdentifierStr"]

@@ -6,7 +6,7 @@ from itertools import accumulate
 from typing import Any, ClassVar, NamedTuple
 
 # Dax
-from jadzia.core.dependency.identifier import Reserved
+from jadzia.core.dependency.reserved import Reserved
 from jadzia.data.archive import DataArchive
 from jadzia.data.sharedmemory import SharedDataFrame
 

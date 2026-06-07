@@ -9,7 +9,6 @@ from jadzia.core.dependency.identifier import (
     BatchIdentifierStr,
     Identifier,
     IdentifierStr,
-    Reserved,
 )
 
 
@@ -20,14 +19,6 @@ class ConfigCls(BaseModel):
     @property
     def output_names(self) -> tuple[str, ...]:
         return (self.ident.output,)
-
-
-@pytest.mark.parametrize("output", ["foo", "bar"])
-@pytest.mark.parametrize("reserved", Reserved)
-def test_reserved(reserved, output):
-    """Identifiers may be built from reserved node names."""
-    example = reserved(output)
-    assert example == Identifier.from_str(f"{reserved}.{output}")
 
 
 @pytest.mark.parametrize("is_batch", [False, True])
