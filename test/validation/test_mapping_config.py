@@ -34,5 +34,8 @@ def test_mapping():
     with pytest.raises(KeyError, match="zz"):
         config["zz"]
 
+    with pytest.raises(ValueError, match="name is reserved"):
+        Examples.model_validate({"loss": {}})
+
     with pytest.raises(ValueError, match="should be a valid integer"):
         Examples.model_validate({"oops": {"foo": 3.3}})
