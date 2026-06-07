@@ -14,11 +14,13 @@ class Reserved(StrEnum):
 
     - `*`: Wildcard used to gather node outputs together.
     - `id`: Identifying data inserted by the data source.
+    - `loss`: Composite loss function value.
     - `source`: Value provided by the data source manifest or archives.
     """
 
     ALL = "*"
     ID = "id"
+    LOSS = "loss"
     SOURCE = "source"
 
     def __call__(self, output: str) -> "Identifier":

@@ -9,7 +9,8 @@ import equinox as eqx
 
 # Dax
 from jadzia.config.loss.function import LossFunction
-from jadzia.core.dependency.identifier import Identifier
+from jadzia.core.dependency.graph import Graph
+from jadzia.core.dependency.identifier import Identifier, Reserved
 from jadzia.core.validation.mapping import MappingConfig
 from jadzia.nn.loss.composite import CompositeLoss as CompositeLossImpl
 from jadzia.nn.loss.composite import CompositeLossTerm
@@ -26,18 +27,6 @@ class CompositeLoss(MappingConfig[LossFunction]):
 
     instance_type: ClassVar[type[eqx.Module]] = CompositeLossImpl
 
-    @property
-    def prediction_names(self) -> tuple[Identifier, ...]:
-        """Names of predicted values passed as inputs to this loss."""
-        all_names = (func.prediction_names for func in self.values())
-        return tuple(sorted(set().union(*all_names)))
-
-    @property
-    def reference_names(self) -> tuple[Identifier, ...]:
-        """Names of reference values passed as inputs to this loss."""
-        all_names = (func.reference_names for func in self.values())
-        return tuple(sorted(set().union(*all_names)))
-
     def build_instance(self) -> CompositeLossImpl:
         """Build an instance based on this configuration."""
         terms = tuple(
@@ -50,6 +39,31 @@ class CompositeLoss(MappingConfig[LossFunction]):
             for name in sorted(self)
         )
         return CompositeLossImpl(terms=terms)
+
+    def add_subgraph(self, graph: Graph[Identifier]) -> Identifier:
+        """
+        Update a dependency graph with this configuration.
+
+        Args:
+            graph: Graph to add the loss function subgraph into.
+
+        Returns:
+            Terminal graph node containing the final loss function value.
+        """
+        outputs = []
+        for name, config in self.items():
+            node = Identifier.gather(name)
+            output = Identifier(name, Reserved.LOSS)
+            graph[node] = config.prediction_names + config.reference_names
+            graph[output] = (node,)
+            outputs.append(output)
+
+        node = Identifier.gather(Reserved.LOSS)
+        graph[node] = outputs
+
+        terminal = Identifier(Reserved.LOSS, "output")
+        graph[terminal] = (node,)
+        return terminal
 
 
 __all__ = ["CompositeLoss"]

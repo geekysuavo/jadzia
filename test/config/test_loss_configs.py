@@ -7,6 +7,7 @@ from pydantic import TypeAdapter
 # Dax
 from jadzia.config.loss.composite import CompositeLoss
 from jadzia.config.loss.function import LossFunction
+from jadzia.core.dependency.graph import Graph
 from jadzia.core.dependency.identifier import Identifier
 
 config_adapter = TypeAdapter(LossFunction)
@@ -34,15 +35,12 @@ def test_composite_loss_config():
         huber={"type": "Huber", "inputs": {"yhat": "bar.yhat", "y": "bar.y"}},
         direct={"type": "Direct", "inputs": {"prediction": "zoo.yhat"}},
     )
-    assert config.prediction_names == (
-        Identifier("bar", "yhat"),
-        Identifier("foo", "yhat"),
-        Identifier("zoo", "yhat"),
-    )
-    assert config.reference_names == (
-        Identifier("bar", "y"),
-        Identifier("foo", "y"),
-    )
+
+    graph = Graph[Identifier]()
+    node = config.add_subgraph(graph)
+    assert node in graph
+    assert node.is_gather is False
+    assert set(graph.sort_nodes(subset=(node,))) == set(graph)
 
     obj = config.build_instance()
     assert isinstance(obj, config.instance_type)
