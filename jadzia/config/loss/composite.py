@@ -40,20 +40,19 @@ class CompositeLoss(MappingConfig[LossFunction]):
         )
         return CompositeLossImpl(terms=terms)
 
-    def add_subgraph(self, graph: Graph[Identifier]) -> Identifier:
+    def build_subgraph(self) -> tuple[Graph[Identifier], Identifier]:
         """
-        Update a dependency graph with this configuration.
-
-        Args:
-            graph: Graph to add the loss function subgraph into.
+        Build a dependency graph based on this configuration.
 
         Returns:
+            Graph containing the loss function subgraph.
             Terminal graph node containing the final loss function value.
         """
         outputs = []
+        graph = Graph[Identifier]()
         for name, config in self.items():
             node = Identifier.gather(name)
-            output = Identifier(name, Reserved.LOSS)
+            output = Identifier(name, "output")
             graph[node] = config.prediction_names + config.reference_names
             graph[output] = (node,)
             outputs.append(output)
@@ -63,7 +62,7 @@ class CompositeLoss(MappingConfig[LossFunction]):
 
         terminal = Identifier(Reserved.LOSS, "output")
         graph[terminal] = (node,)
-        return terminal
+        return (graph, terminal)
 
 
 __all__ = ["CompositeLoss"]

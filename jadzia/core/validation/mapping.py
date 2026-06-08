@@ -92,13 +92,16 @@ class MappingConfig[ValueT: Config](RootModel[dict[KeyStr, ValueT]]):
 class NodeMappingConfig[ValueT: Config](MappingConfig[ValueT]):
     """Mapping that holds a directed acyclic graph of configuration classes."""
 
-    def add_subgraph(self, graph: Graph[Identifier]):
-        """Update a dependency graph with this configuration."""
+    def build_subgraph(self) -> Graph[Identifier]:
+        """Build a dependency graph based on this configuration."""
+        graph = Graph[Identifier]()
         for name, config in self.items():
             node = Identifier.gather(name)
             graph[node] = cast(Node, config).input_names
             for output in Identifier.from_outputs(name, cast(Node, config)):
                 graph[output] = (node,)
+
+        return graph
 
     def node_order(self, subset: Iterable[Identifier] | None = None) -> tuple[str, ...]:
         """
@@ -117,9 +120,7 @@ class NodeMappingConfig[ValueT: Config](MappingConfig[ValueT]):
         def to_node(identifier: Identifier) -> str:
             return identifier.node
 
-        graph = Graph[Identifier]()
-        self.add_subgraph(graph)
-        nodes = graph.sort_nodes(subset)
+        nodes = self.build_subgraph().sort_nodes(subset)
         return tuple(map(to_node, filter(is_gather, nodes)))
 
 

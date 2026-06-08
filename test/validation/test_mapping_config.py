@@ -4,16 +4,20 @@
 import pytest
 
 # Dax
+from jadzia.core.dependency.graph import Graph
+from jadzia.core.dependency.identifier import Identifier, IdentifierStr
 from jadzia.core.validation.base import Config
-from jadzia.core.validation.mapping import MappingConfig
+from jadzia.core.validation.mapping import NodeMappingConfig
 
 
 class Example(Config):
     foo: int = 2
     bar: float = 3.5
+    output_names: tuple[str, ...] = ()
+    input_names: tuple[IdentifierStr, ...] = ()
 
 
-class Examples(MappingConfig[Example]): ...
+class Examples(NodeMappingConfig[Example]): ...
 
 
 def test_mapping():
@@ -39,3 +43,33 @@ def test_mapping():
 
     with pytest.raises(ValueError, match="should be a valid integer"):
         Examples.model_validate({"oops": {"foo": 3.3}})
+
+
+def test_node_mapping():
+    """Configuration mappings may also contain graph nodes."""
+    config_data = {
+        "foo": {"output_names": ("x", "y")},
+        "baz": {"input_names": ("foo.y", "bar.z")},
+        "bar": {"input_names": ("foo.x",), "output_names": ("z",)},
+    }
+    config = Examples.model_validate(config_data)
+    graph = config.build_subgraph()
+
+    expected = {
+        "foo.*": (),
+        "foo.x": ("foo.*",),
+        "foo.y": ("foo.*",),
+        "bar.*": ("foo.x",),
+        "bar.z": ("bar.*",),
+        "baz.*": ("foo.y", "bar.z"),
+    }
+    expected = {
+        Identifier.from_str(key): set(map(Identifier.from_str, values))
+        for key, values in expected.items()
+    }
+    assert graph == Graph(expected)
+
+    assert config.node_order() == ("foo", "bar", "baz")
+
+    subset = (Identifier.from_str("bar.*"),)
+    assert config.node_order(subset) == ("foo", "bar")
