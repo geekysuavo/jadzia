@@ -63,11 +63,7 @@ def test_node_mapping():
         "bar.z": ("bar.*",),
         "baz.*": ("foo.y", "bar.z"),
     }
-    expected = {
-        Identifier.from_str(key): set(map(Identifier.from_str, values))
-        for key, values in expected.items()
-    }
-    assert graph == Graph(expected)
+    assert graph == Graph(expected).map(Identifier.from_str)
 
     assert config.node_order() == ("foo", "bar", "baz")
 

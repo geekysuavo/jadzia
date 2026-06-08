@@ -1,11 +1,14 @@
 """Directed acyclic graphs for dependency management."""
 
 # Standard
-from collections.abc import Iterable, Iterator, Mapping
+from collections.abc import Callable, Iterable, Iterator, Mapping
 from typing import Any, Self
 
 # Dax
 from jadzia.core.dependency.identifier import Identifier
+
+type NodeFunc[InT: str | Identifier, OutT: str | Identifier] = Callable[[InT], OutT]
+"""Function used to map graphs between node types."""
 
 
 class Graph[NodeT: str | Identifier]:
@@ -155,6 +158,19 @@ class Graph[NodeT: str | Identifier]:
         """
         del self._deps[node]
         self._deps = {other: deps - {node} for other, deps in self._deps.items()}
+
+    def map[OutT: str | Identifier](self, func: NodeFunc[NodeT, OutT]) -> Self:
+        """
+        Build a new graph by applying a function to all nodes.
+
+        Args:
+            func: Function to apply to graph nodes.
+
+        Returns:
+            Newly built graph.
+        """
+        deps = {func(node): map(func, deps) for node, deps in self._deps.items()}
+        return type(self)(deps)
 
     def copy(self) -> Self:
         """Create a copy of this graph."""

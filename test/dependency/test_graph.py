@@ -97,6 +97,14 @@ def test_mapping():
     assert graph != equal_graph.dependencies
 
 
+def test_map():
+    """Graphs can be transformed."""
+    lower = Graph({"a": "xy", "b": "zw", "c": "ab"})
+    upper = Graph({"A": "XY", "B": "ZW", "C": "AB"})
+    assert lower.map(str.upper) == upper
+    assert upper.map(str.lower) == lower
+
+
 def test_copy():
     """Graphs can be copied."""
     graph = Graph({"a": (), "b": "a", "c": "a"})
