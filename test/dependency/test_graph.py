@@ -21,6 +21,17 @@ def test_diamond(subset):
     assert Graph(deps).sort_nodes(subset) == ("zzz", "bar", "baz", "foo")
 
 
+@pytest.mark.parametrize("subset", [None, ("a",), ("b",)])
+def test_tree(subset):
+    """Passing valid subsets returns valid orders."""
+    deps = {"root": (), "a": ("root",), "b": ("root",)}
+    order = Graph(deps).sort_nodes(subset)
+    if subset is None:
+        assert set(order) == {"a", "b", "root"}
+    else:
+        assert set(order) == {*subset, "root"}
+
+
 def test_invalid_subset():
     """Passing invalid subsets raises an exception."""
     deps = {"foo": ("bar",), "bar": ()}
@@ -84,3 +95,34 @@ def test_mapping():
 
     assert graph != equal_graph
     assert graph != equal_graph.dependencies
+
+
+def test_copy():
+    """Graphs can be copied."""
+    graph = Graph({"a": (), "b": "a", "c": "a"})
+    graph_copy = graph.copy()
+    assert graph_copy == graph
+    assert graph_copy is not graph
+
+    graph_copy.update("d", "c")
+    assert graph_copy != graph
+
+
+def test_union():
+    """The bitwise `or` of two graphs returns their union."""
+    first = Graph({"a.foo": ("a",), "a.bar": ("a",), "a": ()})
+    second = Graph({"a.foo": (), "b": ("a.foo",)})
+    union = first | second
+
+    expected = Graph({"a.foo": ("a",), "a.bar": ("a",), "a": (), "b": ("a.foo",)})
+    assert union == expected
+
+
+def test_intersection():
+    """The bitwise `and` of two graphs returns their intersection."""
+    first = Graph({"a.foo": ("a",), "a.bar": ("a",), "a": ()})
+    second = Graph({"a.foo": (), "b": ("a.foo",)})
+    intersection = first & second
+
+    expected = Graph({"a.foo": ()})
+    assert intersection == expected

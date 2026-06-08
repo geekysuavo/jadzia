@@ -2,7 +2,7 @@
 
 # Standard
 from collections.abc import Iterable, Iterator, Mapping
-from typing import Any
+from typing import Any, Self
 
 # Dax
 from jadzia.core.dependency.identifier import Identifier
@@ -46,6 +46,38 @@ class Graph[NodeT: str | Identifier]:
             return self.dependencies == other.dependencies
         else:
             return False
+
+    def __or__(self, other: Self) -> Self:
+        """
+        Union of two graphs.
+
+        Args:
+            other: Graph to union with this graph.
+
+        Returns:
+            Union of this graph and `other`.
+        """
+        union = self.copy()
+        for node in other:
+            union.update(node, *other[node])
+
+        return union
+
+    def __and__(self, other: Self) -> Self:
+        """
+        Intersection of two graphs.
+
+        Args:
+            other: Graph to intersection with this graph.
+
+        Returns:
+            Intersection of this graph and `other`.
+        """
+        intersection = self.copy()
+        for node in set(self) - set(other):
+            del intersection[node]
+
+        return intersection
 
     def __len__(self) -> int:
         """
@@ -123,6 +155,10 @@ class Graph[NodeT: str | Identifier]:
         """
         del self._deps[node]
         self._deps = {other: deps - {node} for other, deps in self._deps.items()}
+
+    def copy(self) -> Self:
+        """Create a copy of this graph."""
+        return type(self)(self._deps)  # new graph builds its own copy of self._deps
 
     def update(self, node: NodeT, *deps: NodeT):
         """
