@@ -11,7 +11,7 @@ from pydantic import Field, PositiveInt, Tag
 import jadzia.nn.fission as fission
 import jadzia.nn.fusion as fusion
 import jadzia.nn.linear as linear
-from jadzia.core.validation.block import FissionBlock, FusionBlock, SimpleBlock
+from jadzia.core.validation.block import FissionBlock, FusionBlock, SimpleBlock, Virtual
 from jadzia.core.validation.module import ModuleSignature
 from jadzia.core.validation.union import UnionDiscriminator, UnionSerializer
 
@@ -78,13 +78,21 @@ class Linear(SimpleBlock):
     bias: bool = True
 
 
+class VirtualLinear(SimpleBlock, Virtual):
+    """Configuration for virtual [Linear][] blocks."""
+
+    instance_type: ClassVar[type[eqx.Module]] = linear.Linear
+    instance_call: ClassVar[ModuleSignature] = ModuleSignature.from_type(linear.Linear)
+
+
 type Block = Annotated[
     Annotated[SplitFission, Tag("SplitFission")]
     | Annotated[UnstackFission, Tag("UnstackFission")]
     | Annotated[SumFusion, Tag("SumFusion")]
     | Annotated[MeanFusion, Tag("MeanFusion")]
     | Annotated[MaxFusion, Tag("MaxFusion")]
-    | Annotated[Linear, Tag("Linear")],
+    | Annotated[Linear, Tag("Linear")]
+    | Annotated[VirtualLinear, Tag("VirtualLinear")],
     UnionDiscriminator(),
     UnionSerializer(),
 ]

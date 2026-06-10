@@ -7,6 +7,7 @@ from pydantic import TypeAdapter
 
 # Dax
 from jadzia.config.block import Block
+from jadzia.core.validation.block import Virtual
 
 config_adapter = TypeAdapter(Block)
 config_data = [
@@ -21,6 +22,13 @@ config_data = [
         "sizes": [2, 3],
     },
     {"type": "UnstackFission", "input": "a.b", "num_outputs": 5, "axis": 0},
+    {
+        "type": "Linear",
+        "input": "a.b",
+        "num_input_features": 8,
+        "num_output_features": 1,
+    },
+    {"type": "VirtualLinear", "input": "a.b", "ref": "foo"},
 ]
 
 
@@ -29,5 +37,6 @@ def test_block_configs(data):
     """Model building block configurations validate and build loss modules."""
     config = config_adapter.validate_python(data)
     key = jr.key(42) if config.requires_key else None
-    obj = config.build_instance(key)
-    assert isinstance(obj, config.instance_type)
+    if not isinstance(config, Virtual):
+        obj = config.build_instance(key)
+        assert isinstance(obj, config.instance_type)

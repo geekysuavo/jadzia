@@ -12,7 +12,8 @@ from jadzia.core.dependency.identifier import Identifier
 
 @pytest.mark.parametrize("dag", [True, False])
 @pytest.mark.parametrize("unused_block", [False, True])
-def test_model_config(unused_block, dag):
+@pytest.mark.parametrize("missing_ref", [False, True])
+def test_model_config(missing_ref, unused_block, dag):
     """The composite model configuration validates and builds a module correctly."""
     config_data = {
         "blk_in": {
@@ -27,12 +28,6 @@ def test_model_config(unused_block, dag):
             "num_input_features": 16,
             "num_output_features": 1,
         },
-        "blk_extra": {
-            "type": "Linear",
-            "input": "blk_out.output",
-            "num_input_features": 1,
-            "num_output_features": 1,
-        },
         "blk_cycle_a": {
             "type": "Linear",
             "input": "blk_cycle_b.output",
@@ -45,6 +40,11 @@ def test_model_config(unused_block, dag):
             "num_input_features": 1,
             "num_output_features": 1,
         },
+        "blk_extra": {
+            "type": "VirtualLinear",
+            "input": "blk_out.output",
+            "ref": "blk_out",
+        },
     }
 
     outputs = (Identifier("blk_out", "output"), Identifier("blk_cycle_b", "output"))
@@ -52,11 +52,18 @@ def test_model_config(unused_block, dag):
 
     if not unused_block:
         del config_data["blk_extra"]
+    elif missing_ref:
+        config_data["blk_extra"]["ref"] = "blk_oops"
 
     if dag:
         outputs = outputs[:1]
         del config_data["blk_cycle_a"]
         del config_data["blk_cycle_b"]
+
+    if unused_block and missing_ref:
+        with pytest.raises(ValueError, match="reference blocks are missing"):
+            CompositeModel.model_validate(config_data)
+        return
 
     config = CompositeModel.model_validate(config_data)
 
@@ -100,3 +107,24 @@ def test_model_without_key():
     (model, state) = config.build_instance(outputs=outputs, with_state=True)
     assert isinstance(model, config.instance_type)
     assert isinstance(state, eqx.nn.State)
+
+
+def test_model_with_virtual():
+    """Virtual blocks are not built into modules."""
+    config = CompositeModel(
+        query={
+            "type": "Linear",
+            "input": "a.x",
+            "num_input_features": 8,
+            "num_output_features": 1,
+        },
+        copy={"type": "VirtualLinear", "input": "a.z", "ref": "query"},
+        fusion={"type": "SumFusion", "inputs": ["query.output", "copy.output"]},
+    )
+
+    key = jr.key(42)
+    outputs = (Identifier("fusion", "output"),)
+    model = config.build_instance(key, outputs=outputs)
+    assert "copy" not in model.modules
+    assert sum(block.name == "copy" for block in model.blocks) == 0
+    assert sum(block.name == "query" for block in model.blocks) == 2

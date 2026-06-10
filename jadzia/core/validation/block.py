@@ -177,4 +177,22 @@ class FissionBlock(SimpleBlock):
             return self
 
 
-__all__ = ["BlockConfig", "FissionBlock", "FusionBlock", "GeneralBlock", "SimpleBlock"]
+class Virtual:
+    """
+    Mixin class that marks a building block as virtual.
+
+    Attributes:
+        ref: Name of the building block that this block refers to.
+    """
+
+    ref: Annotated[str, Exclude]
+
+
+__all__ = [
+    "BlockConfig",
+    "FissionBlock",
+    "FusionBlock",
+    "GeneralBlock",
+    "SimpleBlock",
+    "Virtual",
+]

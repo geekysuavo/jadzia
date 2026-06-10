@@ -1,17 +1,19 @@
 """Composite model configuration."""
 
 # Standard
-from typing import ClassVar, Iterable, Literal, overload
+from typing import ClassVar, Iterable, Literal, Self, overload
 
 # Third party
 import equinox as eqx
 import jax
 import jax.random as jr
+from pydantic import model_validator
 
 # Dax
 from jadzia.config.block import Block
 from jadzia.core.dependency.identifier import Identifier
 from jadzia.core.dependency.utility import sort_gathers
+from jadzia.core.validation.block import Virtual
 from jadzia.core.validation.mapping import NodeMappingConfig
 from jadzia.nn.model import CompositeModel as CompositeModelImpl
 from jadzia.nn.model import CompositeModelBlock
@@ -59,6 +61,15 @@ class CompositeModel(NodeMappingConfig[Block]):
         Returns:
             Newly built module instance, with an optional initial state.
         """
+
+        def dereference_virtual(name: str) -> str:
+            """Dereference virtual block names."""
+            block = self[name]
+            if isinstance(block, Virtual):
+                return block.ref
+            else:
+                return name
+
         num_keys = sum(block.requires_key for block in self.values())
         if num_keys and key is None:
             raise ValueError("module requires a key")
@@ -73,7 +84,9 @@ class CompositeModel(NodeMappingConfig[Block]):
         modules = {}
         for name in order:
             block = self[name]
-            if block.requires_key:
+            if isinstance(block, Virtual):
+                pass
+            elif block.requires_key:
                 modules[name] = block.build_instance(keys.pop())
             else:
                 modules[name] = block.build_instance()
@@ -84,8 +97,9 @@ class CompositeModel(NodeMappingConfig[Block]):
                 input_names=tuple(map(str, self[name].input_names)),
                 output_names=tuple(map(str, Identifier.from_outputs(name, self[name]))),
             )
-            for name in order
+            for name in map(dereference_virtual, order)
         )
+
         kwargs = {
             "modules": modules,
             "blocks": blocks,
@@ -97,6 +111,15 @@ class CompositeModel(NodeMappingConfig[Block]):
             return eqx.nn.make_with_state(cls.instance_type)(**kwargs)
         else:
             return cls.instance_type(**kwargs)
+
+    @model_validator(mode="after")
+    def _valid_source_blocks(self) -> Self:
+        """Ensure all virtual blocks refer to defined source blocks."""
+        refs = {block.ref for block in self.values() if isinstance(block, Virtual)}
+        if missing := refs - set(self):
+            raise ValueError(f"reference blocks are missing: {', '.join(missing)}")
+        else:
+            return self
 
 
 __all__ = ["CompositeModel"]
