@@ -7,6 +7,7 @@ import pytest
 from jadzia.core.dependency.graph import Graph
 from jadzia.core.dependency.identifier import Identifier
 from jadzia.core.dependency.utility import (
+    find_ungathered,
     find_unused,
     is_gather,
     merge_graphs,
@@ -96,3 +97,24 @@ def test_find_unused():
         Identifier.from_str("baz.*"),
         Identifier.from_str("baz.w"),
     }
+
+
+def test_find_ungathered():
+    """Ungathered nodes may be identified by searching."""
+    ab = Identifier.gather("ab")
+    xy = Identifier.gather("xy")
+    ab_out = Identifier.from_str("ab.out")
+    xy_out = Identifier.from_str("xy.out")
+
+    graph = Graph[Identifier]()
+    graph.update(xy_out)
+    assert find_ungathered(graph) == {xy_out}
+
+    graph.update(xy_out, xy)
+    assert find_ungathered(graph) == set()
+
+    graph.update(xy, ab_out)
+    assert find_ungathered(graph) == {ab_out}
+
+    graph.update(ab_out, ab)
+    assert find_ungathered(graph) == set()

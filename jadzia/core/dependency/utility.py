@@ -4,7 +4,7 @@
 import functools
 import itertools
 import operator
-from collections.abc import Iterable
+from collections.abc import Callable, Iterable
 from typing import Literal, overload
 
 # Dax
@@ -15,6 +15,15 @@ from jadzia.core.dependency.identifier import Identifier
 def is_gather(identifier: Identifier) -> bool:
     """Return whether an identifier is of the 'gather' type."""
     return identifier.is_gather
+
+
+def is_ungathered_in(graph: Graph[Identifier]) -> Callable[[Identifier], bool]:
+    """Return whether an identifier is 'ungathered' within a graph."""
+
+    def is_ungathered(identifier: Identifier) -> bool:
+        return not identifier.is_gather and not graph[identifier]
+
+    return is_ungathered
 
 
 def to_node(identifier: Identifier) -> str:
@@ -108,9 +117,24 @@ def find_unused(
         return set(graph) - set(graph.sort_nodes(subset))
 
 
+def find_ungathered(graph: Graph[Identifier]) -> set[Identifier]:
+    """
+    Find the dependency-less non-gather nodes in an identifier graph.
+
+    Args:
+        graph: Graph to search.
+
+    Returns:
+        Ungathered nodes. These represent missing inputs to data flow components.
+    """
+    return set(filter(is_ungathered_in(graph), graph))
+
+
 __all__ = [
+    "find_ungathered",
     "find_unused",
     "is_gather",
+    "is_ungathered_in",
     "merge_graphs",
     "sort_gathers",
     "to_node",
