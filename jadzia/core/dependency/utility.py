@@ -130,7 +130,29 @@ def find_ungathered(graph: Graph[Identifier]) -> set[Identifier]:
     return set(filter(is_ungathered_in(graph), graph))
 
 
+def assert_valid(graph: Graph[Identifier], terminal: Identifier):
+    """
+    Raise an exception if an identifier graph is invalid.
+
+    Args:
+        graph: Graph to validate.
+        terminal: Terminal node in the graph, which is the only requirement.
+
+    Raises:
+        ValueError: If the graph contains unused or ungathered nodes.
+    """
+    unused = find_unused(graph, subset=(terminal,))
+    ungathered = find_ungathered(graph)
+    if unused or ungathered:
+        raise ValueError(
+            "invalid data flow: "
+            f"unused components: ({', '.join(unused)}); "
+            f"unresolved inputs: ({', '.join(map(str, ungathered))})"
+        )
+
+
 __all__ = [
+    "assert_valid",
     "find_ungathered",
     "find_unused",
     "is_gather",

@@ -7,6 +7,7 @@ import pytest
 from jadzia.core.dependency.graph import Graph
 from jadzia.core.dependency.identifier import Identifier
 from jadzia.core.dependency.utility import (
+    assert_valid,
     find_ungathered,
     find_unused,
     is_gather,
@@ -118,3 +119,33 @@ def test_find_ungathered():
 
     graph.update(ab_out, ab)
     assert find_ungathered(graph) == set()
+
+
+@pytest.mark.parametrize("ungathered", [False, True])
+@pytest.mark.parametrize("unused", [False, True])
+def test_assert_valid(unused, ungathered):
+    """Invalid graphs raise exceptions."""
+    deps = {
+        "source.*": (),
+        "source.out": ("source.*",),
+        "sink.*": ("source.out",),
+        "sink.out": ("sink.*",)
+    }
+
+    if unused:
+        deps["extra.*"] = ("source.out",)
+        deps["extra.out"] = ("extra.*",)
+
+    if ungathered:
+        deps["sink.*"] = ("source.out", "ghost.out")
+        deps["ghost.out"] = ()
+
+    graph = Graph(deps).map(Identifier.from_str)
+    terminal = Identifier.from_str("sink.out")
+
+    valid = not unused and not ungathered
+    if valid:
+        assert_valid(graph, terminal)
+    else:
+        with pytest.raises(ValueError, match="invalid data flow"):
+            assert_valid(graph, terminal)
