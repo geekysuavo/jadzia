@@ -9,6 +9,7 @@ from pydantic import AfterValidator, ConfigDict, RootModel
 # Dax
 from jadzia.core.dependency.graph import Graph
 from jadzia.core.dependency.identifier import Identifier, Node, Reserved
+from jadzia.core.dependency.utility import is_gather, to_node
 from jadzia.core.validation.base import Config
 
 
@@ -113,13 +114,6 @@ class NodeMappingConfig[ValueT: Config](MappingConfig[ValueT]):
         Returns:
             Sequence of node names in their execution order.
         """
-
-        def is_gather(identifier: Identifier) -> bool:
-            return identifier.is_gather
-
-        def to_node(identifier: Identifier) -> str:
-            return identifier.node
-
         nodes = self.build_subgraph().sort_nodes(subset)
         return tuple(map(to_node, filter(is_gather, nodes)))
 
