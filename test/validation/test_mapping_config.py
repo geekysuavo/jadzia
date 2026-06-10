@@ -64,8 +64,3 @@ def test_node_mapping():
         "baz.*": ("foo.y", "bar.z"),
     }
     assert graph == Graph(expected).map(Identifier.from_str)
-
-    assert config.node_order() == ("foo", "bar", "baz")
-
-    subset = (Identifier.from_str("bar.*"),)
-    assert config.node_order(subset) == ("foo", "bar")

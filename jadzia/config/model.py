@@ -11,6 +11,7 @@ import jax.random as jr
 # Dax
 from jadzia.config.block import Block
 from jadzia.core.dependency.identifier import Identifier
+from jadzia.core.dependency.utility import sort_gathers
 from jadzia.core.validation.mapping import NodeMappingConfig
 from jadzia.nn.model import CompositeModel as CompositeModelImpl
 from jadzia.nn.model import CompositeModelBlock
@@ -67,8 +68,9 @@ class CompositeModel(NodeMappingConfig[Block]):
         keys = list(jr.split(key, num=num_keys)) if key is not None else []
         del key
 
+        order = sort_gathers(self.build_subgraph(), subset=outputs)
+
         modules = {}
-        order = self.node_order(outputs)
         for name in order:
             block = self[name]
             if block.requires_key:

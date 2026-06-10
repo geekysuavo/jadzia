@@ -9,7 +9,6 @@ from pydantic import AfterValidator, ConfigDict, RootModel
 # Dax
 from jadzia.core.dependency.graph import Graph
 from jadzia.core.dependency.identifier import Identifier, Node, Reserved
-from jadzia.core.dependency.utility import is_gather, to_node
 from jadzia.core.validation.base import Config
 
 
@@ -103,19 +102,6 @@ class NodeMappingConfig[ValueT: Config](MappingConfig[ValueT]):
                 graph[output] = (node,)
 
         return graph
-
-    def node_order(self, subset: Iterable[Identifier] | None = None) -> tuple[str, ...]:
-        """
-        Determine the node execution order.
-
-        Args:
-            subset: Optional subset of required node names. Defaults to all nodes.
-
-        Returns:
-            Sequence of node names in their execution order.
-        """
-        nodes = self.build_subgraph().sort_nodes(subset)
-        return tuple(map(to_node, filter(is_gather, nodes)))
 
 
 __all__ = ["KeyStr", "MappingConfig", "NodeMappingConfig"]

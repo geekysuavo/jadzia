@@ -6,7 +6,13 @@ import pytest
 # Dax
 from jadzia.core.dependency.graph import Graph
 from jadzia.core.dependency.identifier import Identifier
-from jadzia.core.dependency.utility import is_gather, merge_graphs, to_node
+from jadzia.core.dependency.utility import (
+    find_unused,
+    is_gather,
+    merge_graphs,
+    sort_gathers,
+    to_node,
+)
 
 
 def test_is_gather():
@@ -47,3 +53,46 @@ def test_merge_graphs():
     third.update(Identifier.from_str("b.other"), Identifier.from_str("b.*"))
     with pytest.raises(ValueError, match="names are not unique"):
         merge_graphs(first, second, third)
+
+
+def test_sort_gathers():
+    """Gather nodes may be topologically sorted."""
+    deps = {
+        "foo.*": (),
+        "foo.x": ("foo.*",),
+        "foo.y": ("foo.*",),
+        "bar.*": ("foo.x",),
+        "bar.z": ("bar.*",),
+        "baz.*": ("foo.y", "bar.z"),
+    }
+    graph = Graph(deps).map(Identifier.from_str)
+
+    assert sort_gathers(graph) == ("foo", "bar", "baz")
+
+    subset = (Identifier.from_str("bar.*"),)
+    assert sort_gathers(graph, subset) == ("foo", "bar")
+
+
+def test_find_unused():
+    """Unused gather nodes may be identified by sorting."""
+    deps = {
+        "foo.*": (),
+        "foo.x": ("foo.*",),
+        "foo.y": ("foo.*",),
+        "bar.*": ("foo.x",),
+        "bar.z": ("bar.*",),
+        "baz.*": ("foo.y", "bar.z"),
+        "baz.w": ("baz.*",),
+    }
+    graph = Graph(deps).map(Identifier.from_str)
+
+    assert find_unused(graph) == set()
+    assert find_unused(graph, gathers=False) == set()
+
+    subset = (Identifier.from_str("bar.z"),)
+    assert find_unused(graph, subset) == {"baz"}
+    assert find_unused(graph, subset, gathers=False) == {
+        Identifier.from_str("foo.y"),
+        Identifier.from_str("baz.*"),
+        Identifier.from_str("baz.w"),
+    }
