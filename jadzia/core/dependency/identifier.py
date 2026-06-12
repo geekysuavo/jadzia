@@ -14,12 +14,14 @@ class Reserved(StrEnum):
 
     - `*`: Wildcard used to gather node outputs together.
     - `id`: Identifying data inserted by the data source.
+    - `eval`: Evaluator result.
     - `loss`: Composite loss function value.
     - `source`: Value provided by the data source manifest or archives.
     """
 
     ALL = "*"
     ID = "id"
+    EVAL = "eval"
     LOSS = "loss"
     SOURCE = "source"
 
