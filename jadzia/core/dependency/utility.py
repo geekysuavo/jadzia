@@ -4,12 +4,15 @@
 import functools
 import itertools
 import operator
-from collections.abc import Callable, Iterable
+from collections.abc import Callable, Container, Iterable
 from typing import Literal, overload
 
 # Dax
 from jadzia.core.dependency.graph import Graph
 from jadzia.core.dependency.identifier import Identifier
+
+type MembershipFunc = Callable[[Identifier], bool]
+"""Function indicating whether an identifier is a member of a given set."""
 
 
 def is_gather(identifier: Identifier) -> bool:
@@ -17,13 +20,22 @@ def is_gather(identifier: Identifier) -> bool:
     return identifier.is_gather
 
 
-def is_ungathered_in(graph: Graph[Identifier]) -> Callable[[Identifier], bool]:
+def is_member(container: Container[str]) -> MembershipFunc:
+    """Return whether an identifier is a member of a container (by node)."""
+
+    def func(identifier: Identifier) -> bool:
+        return identifier.node in container
+
+    return func
+
+
+def is_ungathered_in(graph: Graph[Identifier]) -> MembershipFunc:
     """Return whether an identifier is 'ungathered' within a graph."""
 
-    def is_ungathered(identifier: Identifier) -> bool:
+    def func(identifier: Identifier) -> bool:
         return not identifier.is_gather and not graph[identifier]
 
-    return is_ungathered
+    return func
 
 
 def to_node(identifier: Identifier) -> str:
@@ -71,6 +83,43 @@ def sort_gathers(
     """
     nodes = graph.sort_nodes(subset)
     return tuple(map(to_node, filter(is_gather, nodes)))
+
+
+def find_separator(
+    graph: Graph[Identifier],
+    source: MembershipFunc,
+    sink: MembershipFunc | None = None,
+) -> set[Identifier]:
+    """
+    Find the separator of two node subsets in an identifier graph.
+
+    Because identifier graphs are directed and bipartite, separators are
+    directed from a set of source gather nodes to a set of sink gather nodes.
+    This definition of separator is therefore probably a bit non-canonical.
+
+    Args:
+        graph: Graph to search.
+        source: Membership function of the source set.
+        sink: Optional membership function of the sink set, or `None` to use
+            the node complement of the source set.
+
+    Returns:
+        All nodes in the source set that are depended on by nodes in the sink set.
+    """
+    source_set = set(filter(source, graph))
+
+    sink_set = set(filter(sink, graph)) if sink else set(graph)
+    sink_set -= source_set
+
+    return {
+        identifier
+        for identifier in source_set
+        if any(
+            neighbor
+            for neighbor in sink_set
+            if identifier in graph[neighbor]
+        )
+    }
 
 
 @overload
@@ -153,6 +202,7 @@ def assert_valid(graph: Graph[Identifier], terminal: Identifier):
 
 __all__ = [
     "assert_valid",
+    "find_separator",
     "find_ungathered",
     "find_unused",
     "is_gather",

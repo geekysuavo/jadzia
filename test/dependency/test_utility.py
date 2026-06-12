@@ -8,9 +8,11 @@ from jadzia.core.dependency.graph import Graph
 from jadzia.core.dependency.identifier import Identifier
 from jadzia.core.dependency.utility import (
     assert_valid,
+    find_separator,
     find_ungathered,
     find_unused,
     is_gather,
+    is_member,
     merge_graphs,
     sort_gathers,
     to_node,
@@ -73,6 +75,24 @@ def test_sort_gathers():
 
     subset = (Identifier.from_str("bar.*"),)
     assert sort_gathers(graph, subset) == ("foo", "bar")
+
+
+@pytest.mark.parametrize("reverse", [False, True])
+def test_find_separator(reverse):
+    """Separators may be identified in graphs as expected."""
+    deps = {"a.*": (), "a.out": ("a.*",), "b.*": ("a.out",), "b.out": ("b.*",)}
+    graph = Graph(deps).map(Identifier.from_str)
+
+    source = is_member({"a"})
+    sink = is_member({"b"})
+    if reverse:
+        (source, sink) = (sink, source)
+
+    sepset = find_separator(graph, source, sink)
+    if reverse:
+        assert sepset == set()
+    else:
+        assert sepset == {Identifier.from_str("a.out")}
 
 
 def test_find_unused():
