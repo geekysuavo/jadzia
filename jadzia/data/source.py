@@ -38,6 +38,7 @@ class DataSource:
         mappings: dict[str, list[ArchiveMapping]],
         *,
         insert_id: bool = False,
+        outputs: set[str] | None = None,
     ):
         """
         Initialize the data source.
@@ -47,11 +48,14 @@ class DataSource:
             archives: Named on-disk data archives.
             mappings: Mapping from data frames to associated archives.
             insert_id: When true, include extra provenance identifiers in each row.
+            outputs: Optional set of output keys to return. May be a superset of the
+                actual output keys, in which case `None` is imputed as a value.
         """
         self._dfs = dfs
         self._archives = archives
         self._mappings = mappings
         self._insert_id = insert_id
+        self._outputs = outputs
 
         self._keys = tuple(sorted(dfs))
         self._sizes = tuple(len(dfs[key]) for key in self._keys)
@@ -95,6 +99,9 @@ class DataSource:
 
         if self._insert_id:
             row[f"{Reserved.ID}.{self.MANIFEST_KEY}"] = df_key
+
+        if self._outputs:
+            row = {output: row.get(output) for output in self._outputs}
 
         return row
 
