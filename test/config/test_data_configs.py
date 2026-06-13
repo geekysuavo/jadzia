@@ -199,9 +199,10 @@ def test_batch_config(size, drop):
     assert obj.drop_remainder == drop
 
 
+@pytest.mark.parametrize("outputs", [False, True])
 @pytest.mark.parametrize("dag", [True, False])
 @pytest.mark.parametrize("unused_transform", [False, True])
-def test_composite_tform(unused_transform, dag):
+def test_composite_tform(unused_transform, dag, outputs):
     """Composite transform configurations build sequences of transforms."""
     config_data = {
         "tform_in": {
@@ -234,13 +235,13 @@ def test_composite_tform(unused_transform, dag):
     outputs = (
         Identifier("tform_out", "output"),
         Identifier("tform_cycle_b", "output"),
-    )
+    ) if outputs else None
 
     if not unused_transform:
         del config_data["tform_extra"]
 
     if dag:
-        outputs = outputs[:1]
+        outputs = outputs[:1] if outputs else None
         del config_data["tform_cycle_a"]
         del config_data["tform_cycle_b"]
 
@@ -253,4 +254,4 @@ def test_composite_tform(unused_transform, dag):
 
     transforms = config.build_instance(outputs)
     assert isinstance(transforms, tuple)
-    assert len(transforms) == 2
+    assert len(transforms) == 2 if outputs else 3
