@@ -9,6 +9,7 @@ import pytest
 from jadzia.config.data.archive import ArchiveConfig
 from jadzia.config.data.option import ReaderConfig, ShardingConfig
 from jadzia.config.data.source import SourceConfig, SourceMappingConfig
+from jadzia.config.data.transform import BatchConfig, CompositeTransform
 from jadzia.core.dependency.graph import Graph
 from jadzia.core.dependency.identifier import Identifier
 from jadzia.data.archive import DataArchive
@@ -185,3 +186,71 @@ def test_source_config_caching(mocker, parquet_file):
     SourceConfig.clear_cache()
     config.share(df)
     mock_shared_df.assert_called_once()
+
+
+@pytest.mark.parametrize("drop", [False, True])
+@pytest.mark.parametrize("size", [1, 8])
+def test_batch_config(size, drop):
+    """Batch transform configuations build `grain.transforms.Batch` instances."""
+    config = BatchConfig(size=size, drop=drop)
+    obj = config.build_instance()
+    assert isinstance(obj, grain.transforms.Batch)
+    assert obj.batch_size == size
+    assert obj.drop_remainder == drop
+
+
+@pytest.mark.parametrize("dag", [True, False])
+@pytest.mark.parametrize("unused_transform", [False, True])
+def test_composite_tform(unused_transform, dag):
+    """Composite transform configurations build sequences of transforms."""
+    config_data = {
+        "tform_in": {
+            "type": "Unary",
+            "function": "math.sin",
+            "input": "source.label",
+        },
+        "tform_out": {
+            "type": "Unary",
+            "function": "math.sin",
+            "input": "tform_in.output",
+        },
+        "tform_extra": {
+            "type": "Unary",
+            "function": "math.sin",
+            "input": "tform_out.output",
+        },
+        "tform_cycle_a": {
+            "type": "Unary",
+            "function": "math.sin",
+            "input": "tform_cycle_b.output",
+        },
+        "tform_cycle_b": {
+            "type": "Unary",
+            "function": "math.sin",
+            "input": "tform_cycle_a.output",
+        },
+    }
+
+    outputs = (
+        Identifier("tform_out", "output"),
+        Identifier("tform_cycle_b", "output"),
+    )
+
+    if not unused_transform:
+        del config_data["tform_extra"]
+
+    if dag:
+        outputs = outputs[:1]
+        del config_data["tform_cycle_a"]
+        del config_data["tform_cycle_b"]
+
+    config = CompositeTransform.model_validate(config_data)
+
+    if not dag:
+        with pytest.raises(ValueError, match="graph is not a DAG"):
+            config.build_instance(outputs)
+        return
+
+    transforms = config.build_instance(outputs)
+    assert isinstance(transforms, tuple)
+    assert len(transforms) == 2

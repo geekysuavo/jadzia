@@ -3,7 +3,7 @@
 # Standard
 import functools
 import operator
-from collections.abc import Sequence
+from collections.abc import Iterable, Sequence
 from typing import ClassVar, overload
 
 # Third party
@@ -78,16 +78,26 @@ class SourceMappingConfig(MappingConfig[SourceConfig]):
     """Configuration for [jadzia.data.source.DataSource][]."""
 
     @overload
-    def build_instance(self, dfs: None = None) -> Sequence[pl.DataFrame]: ...
+    def build_instance(
+        self,
+        dfs: None = None,
+        *,
+        outputs: Iterable[Identifier] | None = None,
+    ) -> Sequence[pl.DataFrame]: ...
 
     @overload
-    def build_instance(self, dfs: Sequence[pl.DataFrame]) -> DataSource: ...
+    def build_instance(
+        self,
+        dfs: Sequence[pl.DataFrame],
+        *,
+        outputs: Iterable[Identifier] | None = None,
+    ) -> DataSource: ...
 
     def build_instance(
         self,
         dfs: Sequence[pl.DataFrame] | None = None,
         *,
-        outputs: set[Identifier] | None = None,
+        outputs: Iterable[Identifier] | None = None,
     ) -> Sequence[pl.DataFrame] | DataSource:
         """
         Build an instance from this configuration.
