@@ -6,9 +6,10 @@ from typing import Annotated, ClassVar
 
 # Third party
 import pytest
+from pydantic import PlainSerializer
 
 # Dax
-from jadzia.core.validation.buildable import BuildableConfig, Exclude
+from jadzia.core.validation.buildable import BuildableConfig, Exclude, Passthrough
 
 
 class Widget(ABC):
@@ -38,7 +39,7 @@ class BuildableWidget(BuildableConfig[Widget]): ...
 class FooConfig(BuildableWidget):
     instance_type: ClassVar[type[Widget]] = FooWidget
     extra: Annotated[str, Exclude] = "hello"
-    n: int = 3
+    n: Annotated[int, PlainSerializer(str), Passthrough] = 3
 
 
 BarConfig = BuildableWidget.auto(BarWidget)
@@ -75,6 +76,7 @@ def test_model_dump_for_instance():
 
     data = foo.model_dump_for_instance()
     assert set(data) == {"n"}  # extra is excluded
+    assert isinstance(data["n"], int)  # passthrough
 
     data = bar.model_dump_for_instance()
     assert set(data) == {"flag"}  # auto classes work too

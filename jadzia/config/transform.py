@@ -18,6 +18,7 @@ from pydantic import (
 # Dax
 import jadzia.data.transform.auxiliary as aux
 import jadzia.data.transform.general as gen
+from jadzia.core.validation.buildable import Passthrough
 from jadzia.core.validation.function import FunctionStr
 from jadzia.core.validation.transform import TransformConfig, TransformSignature
 from jadzia.core.validation.union import UnionDiscriminator, UnionSerializer
@@ -115,7 +116,7 @@ class Unary(TransformConfig):
         gen.Unary
     )
 
-    function: FunctionStr
+    function: Annotated[FunctionStr, Passthrough]
     args: Annotated[tuple[gen.Arg, ...], Field(default_factory=tuple)]
     kwargs: Annotated[dict[str, gen.Arg], Field(default_factory=dict)]
 

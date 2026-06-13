@@ -15,6 +15,10 @@ class Exclude:
     """Sentinel class used to exclude fields when building instances."""
 
 
+class Passthrough:
+    """Sentinel class used to pass fields through when building instances."""
+
+
 class BuildableConfig[InstanceT: Any](Config):
     """Base class for all validated configurations of buildable objects."""
 
@@ -55,8 +59,11 @@ class BuildableConfig[InstanceT: Any](Config):
         }
         passthrough = {
             name
-            for name in cls.model_fields
-            if isinstance(getattr(self, name), pass_subclasses)
+            for name, field_info in cls.model_fields.items()
+            if (
+                Passthrough in field_info.metadata
+                or isinstance(getattr(self, name), pass_subclasses)
+            )
             and name not in exclude
         }
         build = {
@@ -149,4 +156,4 @@ class BuildableConfig[InstanceT: Any](Config):
         return base_cls.__annotations__["instance_type"]
 
 
-__all__ = ["BuildableConfig", "Exclude"]
+__all__ = ["BuildableConfig", "Exclude", "Passthrough"]
