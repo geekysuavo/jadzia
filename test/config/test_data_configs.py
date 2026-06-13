@@ -7,11 +7,13 @@ import pytest
 
 # Dax
 from jadzia.config.data.archive import ArchiveConfig
+from jadzia.config.data.loader import DataLoaderConfig
 from jadzia.config.data.option import ReaderConfig, ShardingConfig
 from jadzia.config.data.source import SourceConfig, SourceMappingConfig
 from jadzia.config.data.transform import BatchConfig, CompositeTransform
 from jadzia.core.dependency.graph import Graph
 from jadzia.core.dependency.identifier import Identifier
+from jadzia.core.validation.context import RuntimeContext
 from jadzia.data.archive import DataArchive
 from jadzia.data.sharedmemory import SharedDataFrame
 from jadzia.data.source import DataSource
@@ -255,3 +257,39 @@ def test_composite_tform(unused_transform, dag, outputs):
     transforms = config.build_instance(outputs)
     assert isinstance(transforms, tuple)
     assert len(transforms) == 2 if outputs else 3
+
+
+def test_loader_config(parquet_file, lmdb_archive_dir):
+    """Data loader configurations build data loaders."""
+    config_data = {
+        "source": {
+            "first": {
+                "manifest": parquet_file,
+                "archives": {"ref": {"path": lmdb_archive_dir}},
+            },
+        },
+        "transformations": {
+            "exp": {"type": "Unary", "input": "source.label", "function": "math.exp"}
+        },
+        "batch": {"size": 8},
+        "sampler": {"type": "Sequential"},
+    }
+    context = RuntimeContext(name="test", path=parquet_file.parent)
+    config = DataLoaderConfig.model_validate(config_data, context=context)
+
+    deps = {
+        "source.*": (),
+        "id.manifest": ("source.*",),
+        "source.label": ("source.*",),
+        "source.ref": ("source.*",),
+        "exp.*": ("source.label",),
+        "exp.output": ("exp.*",),
+    }
+    graph = config.build_subgraph()
+    assert graph == Graph(deps).map(Identifier.from_str)
+
+    loader = config.build_instance()
+    assert isinstance(loader, grain.DataLoader)
+
+    batch = next(iter(loader))
+    assert isinstance(batch, dict)
