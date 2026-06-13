@@ -2,12 +2,42 @@
 
 # Third party
 import grain
+import polars as pl
 import pytest
 
 # Dax
 from jadzia.config.data.archive import ArchiveConfig
 from jadzia.config.data.option import ReaderConfig, ShardingConfig
+from jadzia.config.data.source import SourceConfig, SourceMappingConfig
+from jadzia.core.dependency.graph import Graph
+from jadzia.core.dependency.identifier import Identifier
 from jadzia.data.archive import DataArchive
+from jadzia.data.sharedmemory import SharedDataFrame
+from jadzia.data.source import DataSource
+
+
+@pytest.fixture
+def parquet_file(tmp_path):
+    """File containing `parquet` data."""
+    data = {
+        "label": [0.1, 2.3, 4.5, 6.7, 8.9, 1.0],
+        "ref": ["foo", "bar"] * 3,
+    }
+    out_path = tmp_path / "manifest.parquet"
+    pl.DataFrame(data).write_parquet(out_path)
+    return out_path
+
+
+@pytest.fixture
+def parquet_file_no_ref(tmp_path):
+    """File containing `parquet` data that does not refer into an archive."""
+    data = {
+        "label": [1.5, 3.2, 2.6, 8.7, 4.9],
+        "val": [42, 57, 42, 57, 42],
+    }
+    out_path = tmp_path / "manifest-b.parquet"
+    pl.DataFrame(data).write_parquet(out_path)
+    return out_path
 
 
 @pytest.fixture
@@ -61,6 +91,63 @@ def test_archive_config(lmdb_archive_dir):
     assert dict(obj.items()) == {"foo": 42, "bar": 57}
 
 
+def test_source_config(parquet_file, lmdb_archive_dir):
+    """Source configurations build cached shared data frames with attached archives."""
+    config = SourceConfig(
+        manifest=parquet_file,
+        archives={"ref": ArchiveConfig(path=lmdb_archive_dir)},
+    )
+
+    df = config.read()
+    assert isinstance(df, pl.DataFrame)
+
+    shared_df = config.share(df)
+    assert isinstance(shared_df, SharedDataFrame)
+    assert config.share(df) is shared_df
+
+
+@pytest.mark.parametrize("outputs", [None, {"source.val"}], ids=["all", "one"])
+def test_source_mapping(parquet_file, parquet_file_no_ref, lmdb_archive_dir, outputs):
+    """Source configuration mappings build data sources."""
+    config = SourceMappingConfig(
+        first=SourceConfig(
+            manifest=parquet_file,
+            archives={"val": ArchiveConfig(path=lmdb_archive_dir, from_key="ref")},
+        ),
+        second=SourceConfig(
+            manifest=parquet_file_no_ref,
+            archives={},
+        ),
+    )
+
+    first_deps = {
+        "source.*": (),
+        "id.manifest": ("source.*",),
+        "source.label": ("source.*",),
+        "source.ref": ("source.*",),
+        "source.val": ("source.*",),
+    }
+    first_graph = config["first"].build_subgraph()
+    assert first_graph == Graph(first_deps).map(Identifier.from_str)
+
+    second_deps = first_deps.copy()
+    second_deps.pop("source.ref")
+    second_graph = config["second"].build_subgraph()
+    assert second_graph == Graph(second_deps).map(Identifier.from_str)
+
+    graph = config.build_subgraph()
+    assert graph == (first_graph | second_graph)
+
+    dfs = config.build_instance(outputs=outputs)
+    source = config.build_instance(dfs, outputs=outputs)
+    assert isinstance(source, DataSource)
+    if outputs:
+        assert set(source[0]) == outputs
+    else:
+        all_outputs = {"id.manifest", "source.label", "source.ref", "source.val"}
+        assert set(source[0]) == all_outputs
+
+
 def test_archive_config_caching(mocker, tmp_path):
     """Built data archives are cached by path."""
     mock_archive = mocker.patch("jadzia.config.data.archive.DataArchive")
@@ -77,3 +164,24 @@ def test_archive_config_caching(mocker, tmp_path):
     ArchiveConfig.clear_cache()
     config.build_instance()
     mock_archive.assert_called_once()
+
+
+def test_source_config_caching(mocker, parquet_file):
+    """Shared data frames are cached by hash."""
+    mock_shared_df = mocker.patch("jadzia.config.data.source.SharedDataFrame")
+    SourceConfig.clear_cache()
+
+    config = SourceConfig(manifest=parquet_file, archives={})
+    df = config.read()
+    mock_shared_df.assert_not_called()
+
+    config.share(df)
+    mock_shared_df.assert_called_once()
+    mock_shared_df.reset_mock()
+
+    config.share(df)
+    mock_shared_df.assert_not_called()
+
+    SourceConfig.clear_cache()
+    config.share(df)
+    mock_shared_df.assert_called_once()

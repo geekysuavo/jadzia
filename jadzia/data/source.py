@@ -92,7 +92,7 @@ class DataSource:
             df_index = index - self._offsets[key_index - 1]
 
         row = self._dfs[df_key][df_index]
-        for mapping in self._mappings[df_key]:
+        for mapping in self._mappings.get(df_key, ()):
             archive_key = row[mapping.source_key]
             archive_value = self._archives[mapping.archive][archive_key]
             row[mapping.dest_key] = archive_value
