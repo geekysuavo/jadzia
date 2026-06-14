@@ -5,7 +5,19 @@ import numpy as np
 import pytest
 
 # Dax
-from jadzia.data.transform.general import Unary
+from jadzia.data.transform.general import ArraySize, Unary
+
+
+@pytest.mark.parametrize(("axis", "size"), [(0, 2), (-1, 3), (None, 6)])
+def test_array_size(axis, size):
+    """Per-axis size or number of elements may be obtained from arrays."""
+    transform = ArraySize(
+        input_names=("x",),
+        output_names=("y",),
+        axis=axis,
+    )
+    x = np.random.default_rng().normal(size=(2, 3))
+    assert transform(x) == size
 
 
 @pytest.mark.parametrize("deg", [False, True])

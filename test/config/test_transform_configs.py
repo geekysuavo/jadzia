@@ -15,6 +15,8 @@ config_data = [
     {"type": "InsertRandomChoice", "values": ("x", "y")},
     {"type": "InsertRandomInteger"},
     {"type": "InsertRandomUniform"},
+    {"type": "ArraySize", "input": "a.b", "axis": 0},
+    {"type": "ArraySize", "input": "a.b", "axis": None},
     {"type": "Unary", "input": "a.b", "function": "math.sin"},
 ]
 

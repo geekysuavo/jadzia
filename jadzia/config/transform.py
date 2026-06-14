@@ -108,6 +108,17 @@ class InsertRandomUniform(TransformConfig):
             raise ValueError("lower bound must be less than upper bound")
 
 
+class ArraySize(TransformConfig):
+    """Configuration for [jadzia.data.transform.general.ArraySize][]."""
+
+    instance_type: ClassVar[type[Transformation]] = gen.ArraySize
+    instance_call: ClassVar[TransformSignature] = TransformSignature.from_type(
+        gen.ArraySize
+    )
+
+    axis: int | None = 0
+
+
 class Unary(TransformConfig):
     """Configuration for [jadzia.data.transform.general.Unary][]."""
 
@@ -128,6 +139,7 @@ type Transform = Annotated[
     | Annotated[InsertRandomChoice, Tag("InsertRandomChoice")]
     | Annotated[InsertRandomInteger, Tag("InsertRandomInteger")]
     | Annotated[InsertRandomUniform, Tag("InsertRandomUniform")]
+    | Annotated[ArraySize, Tag("ArraySize")]
     | Annotated[Unary, Tag("Unary")],
     UnionDiscriminator(),
     UnionSerializer(),
