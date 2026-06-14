@@ -17,6 +17,7 @@ from jadzia.core.validation.context import RuntimeContext
 from jadzia.data.archive import DataArchive
 from jadzia.data.sharedmemory import SharedDataFrame
 from jadzia.data.source import DataSource
+from jadzia.data.transform.special import ConvertNone, SelectKeys
 
 
 @pytest.fixture
@@ -190,15 +191,42 @@ def test_source_config_caching(mocker, parquet_file):
     mock_shared_df.assert_called_once()
 
 
+@pytest.mark.parametrize("outputs", [None, {"a.b"}], ids=[False, True])
+@pytest.mark.parametrize("concatenate", [None, {"a.b"}], ids=[False, True])
+@pytest.mark.parametrize("convert_none", [True, False])
 @pytest.mark.parametrize("drop", [False, True])
 @pytest.mark.parametrize("size", [1, 8])
-def test_batch_config(size, drop):
+def test_batch_config(size, drop, convert_none, concatenate, outputs):
     """Batch transform configuations build `grain.transforms.Batch` instances."""
-    config = BatchConfig(size=size, drop=drop)
-    obj = config.build_instance()
-    assert isinstance(obj, grain.transforms.Batch)
-    assert obj.batch_size == size
-    assert obj.drop_remainder == drop
+    config = BatchConfig(
+        size=size,
+        drop=drop,
+        concatenate=concatenate,
+        convert_none=convert_none,
+    )
+    transforms = config.build_instance(outputs)
+    assert isinstance(transforms, tuple)
+
+    expected_num = int(convert_none) + int(outputs is not None) + 1
+    assert len(transforms) == expected_num
+
+    if convert_none:
+        (convert_transform, *transforms) = transforms
+        assert isinstance(convert_transform, ConvertNone)
+
+    if outputs:
+        (select_transform, *transforms) = transforms
+        assert isinstance(select_transform, SelectKeys)
+
+    (*transforms, batch_transform) = transforms
+    assert isinstance(batch_transform, grain.transforms.Batch)
+    assert batch_transform.batch_size == size
+    assert batch_transform.drop_remainder == drop
+    assert transforms == []
+
+    deps = {"a.b": (), "batch.*": ("a.b",)} if concatenate else {}
+    graph = config.build_subgraph()
+    assert graph == Graph(deps).map(Identifier.from_str)
 
 
 @pytest.mark.parametrize("outputs", [False, True])

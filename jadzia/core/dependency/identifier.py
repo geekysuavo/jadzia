@@ -16,6 +16,7 @@ class Reserved(StrEnum):
     - `id`: Identifying data inserted by the data source.
     - `eval`: Evaluator result.
     - `loss`: Composite loss function value.
+    - `batch`: Batch transformation requirements.
     - `source`: Value provided by the data source manifest or archives.
     """
 
@@ -23,6 +24,7 @@ class Reserved(StrEnum):
     ID = "id"
     EVAL = "eval"
     LOSS = "loss"
+    BATCH = "batch"
     SOURCE = "source"
 
     def __call__(self, output: str) -> "Identifier":

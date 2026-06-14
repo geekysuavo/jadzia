@@ -53,7 +53,7 @@ class DataLoaderConfig(Config):
         dataset = grain.MapDataset.source(source)
         operations = (
             *self.transformations.build_instance(transform_outputs),
-            self.batch.build_instance(transform_outputs),
+            *self.batch.build_instance(transform_outputs),
         )
         return grain.DataLoader(
             data_source=dataset,
@@ -67,7 +67,11 @@ class DataLoaderConfig(Config):
 
     def build_subgraph(self) -> Graph[Identifier]:
         """Build a dependency graph based on this configuration."""
-        return self.source.build_subgraph() | self.transformations.build_subgraph()
+        return (
+            self.source.build_subgraph()
+            | self.batch.build_subgraph()
+            | self.transformations.build_subgraph()
+        )
 
 
 class DataConfig(MappingConfig[DataLoaderConfig]):
