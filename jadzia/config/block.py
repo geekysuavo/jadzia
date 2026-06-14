@@ -79,7 +79,7 @@ class Linear(SimpleBlock):
 
 
 class VirtualLinear(SimpleBlock, Virtual):
-    """Configuration for virtual [Linear][] blocks."""
+    """Configuration for virtual [jadzia.config.block.Linear][] blocks."""
 
     instance_type: ClassVar[type[eqx.Module]] = linear.Linear
     instance_call: ClassVar[ModuleSignature] = ModuleSignature.from_type(linear.Linear)
