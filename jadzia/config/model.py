@@ -24,6 +24,11 @@ class CompositeModel(NodeMappingConfig[Block]):
 
     instance_type: ClassVar[type[eqx.Module]] = CompositeModelImpl
 
+    @property
+    def requires_key(self) -> bool:
+        """Whether any model building blocks requires a key."""
+        return any(block.requires_key for block in self.values())
+
     @overload
     def build_instance(
         self,
@@ -31,7 +36,7 @@ class CompositeModel(NodeMappingConfig[Block]):
         *,
         outputs: Iterable[Identifier],
         with_state: Literal[False] = False,
-    ) -> eqx.Module: ...
+    ) -> CompositeModelImpl: ...
 
     @overload
     def build_instance(
@@ -40,7 +45,7 @@ class CompositeModel(NodeMappingConfig[Block]):
         *,
         outputs: Iterable[Identifier],
         with_state: Literal[True] = True,
-    ) -> tuple[eqx.Module, eqx.nn.State]: ...
+    ) -> tuple[CompositeModelImpl, eqx.nn.State]: ...
 
     def build_instance(
         self,
@@ -48,7 +53,7 @@ class CompositeModel(NodeMappingConfig[Block]):
         *,
         outputs: Iterable[Identifier],
         with_state: bool = False,
-    ) -> eqx.Module | tuple[eqx.Module, eqx.nn.State]:
+    ) -> CompositeModelImpl | tuple[CompositeModelImpl, eqx.nn.State]:
         """
         Build an instance based on this configuration.
 
@@ -106,11 +111,10 @@ class CompositeModel(NodeMappingConfig[Block]):
             "outputs": tuple(map(str, outputs)),
         }
 
-        cls = type(self)
         if with_state:
-            return eqx.nn.make_with_state(cls.instance_type)(**kwargs)
+            return eqx.nn.make_with_state(CompositeModelImpl)(**kwargs)
         else:
-            return cls.instance_type(**kwargs)
+            return CompositeModelImpl(**kwargs)
 
     @model_validator(mode="after")
     def _valid_source_blocks(self) -> Self:

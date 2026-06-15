@@ -66,6 +66,7 @@ def test_model_config(missing_ref, unused_block, dag):
         return
 
     config = CompositeModel.model_validate(config_data)
+    assert config.requires_key is True
 
     if not dag:
         with pytest.raises(ValueError, match="graph is not a DAG"):
