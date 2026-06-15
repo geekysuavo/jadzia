@@ -20,9 +20,31 @@ from jadzia.core.dependency.utility import (
 
 
 def test_is_gather():
-    """Gather identifiers may be identified."""
+    """Gather identifiers are identifiable."""
     assert is_gather(Identifier.gather("foo")) is True
     assert is_gather(Identifier("foo", "bar")) is False
+
+
+def test_is_member():
+    """Identifiers may be part of a group by node or by node and output."""
+    ab = Identifier.from_str("a.b")
+    ax = Identifier.from_str("a.x")
+    cd = Identifier.from_str("c.d")
+    ef = Identifier.from_str("e.f")
+
+    foo = {ab, cd}
+    is_in_foo = is_member(foo)
+    assert is_in_foo(ab) is True
+    assert is_in_foo(ax) is False
+    assert is_in_foo(cd) is True
+    assert is_in_foo(ef) is False
+
+    bar = {ab.node, cd.node}
+    is_in_bar = is_member(bar)
+    assert is_in_bar(ab) is True
+    assert is_in_bar(ax) is True
+    assert is_in_bar(cd) is True
+    assert is_in_bar(ef) is False
 
 
 @pytest.mark.parametrize("node", ["foo", "zab"])

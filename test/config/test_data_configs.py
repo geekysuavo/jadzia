@@ -287,17 +287,21 @@ def test_composite_tform(unused_transform, dag, outputs):
     assert len(transforms) == 2 if outputs else 3
 
 
-def test_loader_config(parquet_file, lmdb_archive_dir):
+@pytest.mark.parametrize("transform_outputs", [False, True])
+def test_loader_config(parquet_file, lmdb_archive_dir, transform_outputs):
     """Data loader configurations build data loaders."""
+    transform_outputs = (Identifier("exp", "output"),) if transform_outputs else None
+
     config_data = {
         "source": {
             "first": {
                 "manifest": parquet_file,
-                "archives": {"ref": {"path": lmdb_archive_dir}},
+                "archives": {"val": {"path": lmdb_archive_dir, "from_key": "ref"}},
             },
         },
         "transformations": {
-            "exp": {"type": "Unary", "input": "source.label", "function": "math.exp"}
+            "exp": {"type": "Unary", "input": "source.label", "function": "math.exp"},
+            "sin": {"type": "Unary", "input": "source.label", "function": "math.sin"},
         },
         "batch": {"size": 8},
         "sampler": {"type": "Sequential"},
@@ -310,13 +314,16 @@ def test_loader_config(parquet_file, lmdb_archive_dir):
         "id.manifest": ("source.*",),
         "source.label": ("source.*",),
         "source.ref": ("source.*",),
+        "source.val": ("source.*",),
         "exp.*": ("source.label",),
         "exp.output": ("exp.*",),
+        "sin.*": ("source.label",),
+        "sin.output": ("sin.*",),
     }
     graph = config.build_subgraph()
     assert graph == Graph(deps).map(Identifier.from_str)
 
-    loader = config.build_instance()
+    loader = config.build_instance(transform_outputs=transform_outputs)
     assert isinstance(loader, grain.DataLoader)
 
     batch = next(iter(loader))

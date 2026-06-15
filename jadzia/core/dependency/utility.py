@@ -4,7 +4,7 @@
 import functools
 import itertools
 import operator
-from collections.abc import Callable, Container, Iterable
+from collections.abc import Callable, Collection, Iterable
 from typing import Literal, overload
 
 # Dax
@@ -20,17 +20,43 @@ def is_gather(identifier: Identifier) -> bool:
     return identifier.is_gather
 
 
-def is_member(container: Container[str]) -> MembershipFunc:
-    """Return whether an identifier is a member of a container (by node)."""
+def is_member(collection: Collection[str] | Collection[Identifier]) -> MembershipFunc:
+    """
+    Return an identifier membership function.
 
-    def func(identifier: Identifier) -> bool:
-        return identifier.node in container
+    Args:
+        collection: Collection of node names or identifiers.
 
-    return func
+    Returns:
+        Function that accepts an identifier and returns true when the identifier
+            is deemed a member of `collection`, either by node name or by complete
+            equality.
+    """
+
+    def str_func(identifier: Identifier) -> bool:
+        return identifier.node in collection
+
+    def ident_func(identifier: Identifier) -> bool:
+        return identifier in collection
+
+    if all(isinstance(obj, str) for obj in collection):
+        return str_func
+    else:
+        return ident_func
 
 
 def is_ungathered_in(graph: Graph[Identifier]) -> MembershipFunc:
-    """Return whether an identifier is 'ungathered' within a graph."""
+    """
+    Return a function that determines whether an identifier is ungathered in a graph.
+
+    Args:
+        graph: Identifier graph to search.
+
+    Returns:
+        Function that accepts an identifier and returns true when the identifier
+            is ungathered in `graph`, i.e. when it is a non-gather node without
+            any dependencies.
+    """
 
     def func(identifier: Identifier) -> bool:
         return not identifier.is_gather and not graph[identifier]

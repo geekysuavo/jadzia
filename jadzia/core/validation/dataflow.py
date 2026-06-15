@@ -2,7 +2,7 @@
 
 # Standard
 import itertools
-from collections.abc import Container, Iterable
+from collections.abc import Collection, Iterable
 
 # Dax
 from jadzia.core.dependency.graph import Graph
@@ -19,7 +19,7 @@ def validate_data_flow(
     graph: Graph[Identifier],
     terminal: Identifier,
     *,
-    assignment: dict[str, Container[str]],
+    assignment: dict[str, Collection[str] | Collection[Identifier]],
     allowed: dict[str, Iterable[str]],
 ) -> dict[str, set[Identifier]]:
     """
