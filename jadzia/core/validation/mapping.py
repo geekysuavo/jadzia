@@ -1,35 +1,23 @@
 """Validated mapping classes."""
 
 # Standard
-from typing import Annotated, Iterable, Iterator, cast
+from typing import Iterable, Iterator, cast
 
 # Third party
-from pydantic import AfterValidator, ConfigDict, RootModel
+from pydantic import ConfigDict, RootModel
 
 # Dax
 from jadzia.core.dependency.graph import Graph
-from jadzia.core.dependency.identifier import Identifier, Node, Reserved
+from jadzia.core.dependency.identifier import Identifier, Node, UnreservedStr
 from jadzia.core.validation.base import Config
 
 
-def _validate_name(value: str) -> str:
-    """Ensure that mapping keys do not collide with reserved names."""
-    if value in Reserved:
-        raise ValueError(f"name is reserved: '{value}'")
-    else:
-        return value
-
-
-type KeyStr = Annotated[str, AfterValidator(_validate_name)]
-"""Type of mapping key strings, which must not be reserved names."""
-
-
-class MappingConfig[ValueT: Config](RootModel[dict[KeyStr, ValueT]]):
+class MappingConfig[ValueT: Config](RootModel[dict[UnreservedStr, ValueT]]):
     """Mapping that holds configuration classes as values."""
 
     model_config = ConfigDict(frozen=True)
 
-    root: dict[KeyStr, ValueT]
+    root: dict[UnreservedStr, ValueT]
 
     def __len__(self) -> int:
         """
@@ -104,4 +92,4 @@ class NodeMappingConfig[ValueT: Config](MappingConfig[ValueT]):
         return graph
 
 
-__all__ = ["KeyStr", "MappingConfig", "NodeMappingConfig"]
+__all__ = ["MappingConfig", "NodeMappingConfig"]

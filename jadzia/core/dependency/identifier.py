@@ -5,7 +5,7 @@ from enum import StrEnum
 from typing import Annotated, NamedTuple, Protocol, Self
 
 # Third party
-from pydantic import BeforeValidator, PlainSerializer
+from pydantic import AfterValidator, BeforeValidator, PlainSerializer
 
 
 class Reserved(StrEnum):
@@ -129,6 +129,14 @@ class Identifier(NamedTuple):
         return cls(node, output)
 
 
+def _validate_unreserved(value: str) -> str:
+    """Ensure that mapping keys do not collide with reserved names."""
+    if value in Reserved:
+        raise ValueError(f"name is reserved: '{value}'")
+    else:
+        return value
+
+
 type IdentifierStr = Annotated[
     Identifier,
     BeforeValidator(Identifier.from_str),
@@ -136,4 +144,7 @@ type IdentifierStr = Annotated[
 ]
 """Type annotation for identifiers that may be coerced from strings."""
 
-__all__ = ["Identifier", "IdentifierStr", "Reserved"]
+type UnreservedStr = Annotated[str, AfterValidator(_validate_unreserved)]
+"""Type of mapping key strings, which must not be reserved names."""
+
+__all__ = ["Identifier", "IdentifierStr", "Reserved", "UnreservedStr"]
