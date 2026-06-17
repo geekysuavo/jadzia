@@ -5,6 +5,7 @@ import pytest
 
 # Dax
 from jadzia.core.dependency.graph import Graph
+from jadzia.core.dependency.identifier import Identifier
 
 
 @pytest.mark.parametrize("subset", [None, ("foo",)])
@@ -116,7 +117,7 @@ def test_copy():
     assert graph_copy != graph
 
 
-def test_union():
+def test_bitwise_or():
     """The bitwise `or` of two graphs returns their union."""
     first = Graph({"a.foo": ("a",), "a.bar": ("a",), "a": ()})
     second = Graph({"a.foo": (), "b": ("a.foo",)})
@@ -126,7 +127,7 @@ def test_union():
     assert union == expected
 
 
-def test_intersection():
+def test_bitwise_and():
     """The bitwise `and` of two graphs returns their intersection."""
     first = Graph({"a.foo": ("a",), "a.bar": ("a",), "a": ()})
     second = Graph({"a.foo": (), "b": ("a.foo",)})
@@ -134,3 +135,30 @@ def test_intersection():
 
     expected = Graph({"a.foo": ()})
     assert intersection == expected
+
+
+def test_union():
+    """Multiple graphs without overlapping gather nodes may be merged."""
+    first_deps = {"a.*": (), "a.out": ("a.*",)}
+    second_deps = {"b.*": ("a.out",), "b.out": ("b.*",)}
+    third_deps = {"c.*": ("b.out",), "c.out": ("c.*",)}
+    expected_deps = {
+        "a.*": (),
+        "a.out": ("a.*",),
+        "b.*": ("a.out",),
+        "b.out": ("b.*",),
+        "c.*": ("b.out",),
+        "c.out": ("c.*",),
+    }
+
+    first = Graph(first_deps).map(Identifier.from_str)
+    second = Graph(second_deps).map(Identifier.from_str)
+    third = Graph(third_deps).map(Identifier.from_str)
+    expected = Graph(expected_deps).map(Identifier.from_str)
+
+    merged = Graph.union(first, second, third)
+    assert merged == expected
+
+    third.update(Identifier.from_str("b.other"), Identifier.from_str("b.*"))
+    with pytest.raises(ValueError, match="names are not unique"):
+        Graph.union(first, second, third)

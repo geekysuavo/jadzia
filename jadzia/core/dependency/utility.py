@@ -1,9 +1,6 @@
 """Dependency management utility functions."""
 
 # Standard
-import functools
-import itertools
-import operator
 from collections.abc import Callable, Collection, Iterable
 from typing import Literal, overload
 
@@ -67,30 +64,6 @@ def is_ungathered_in(graph: Graph[Identifier]) -> MembershipFunc:
 def to_node(identifier: Identifier) -> str:
     """Return the node name of an identifier."""
     return identifier.node
-
-
-def merge_graphs(*graphs: Graph[Identifier]) -> Graph[Identifier]:
-    """
-    Compute the union of one or more identifier graphs.
-
-    Args:
-        graphs: Graphs to merge together.
-
-    Returns:
-        Union of all graphs.
-
-    Raises:
-        ValueError: If any two graphs contain identical gather nodes.
-    """
-    overlaps = set()
-    for first, second in itertools.combinations(graphs, 2):
-        overlaps.update(filter(is_gather, first & second))
-
-    if overlaps:
-        overlap_str = ", ".join(map(str, overlaps))
-        raise ValueError(f"names are not unique: {overlap_str}")
-
-    return functools.reduce(operator.or_, graphs)
 
 
 def sort_gathers(
@@ -233,7 +206,6 @@ __all__ = [
     "find_unused",
     "is_gather",
     "is_ungathered_in",
-    "merge_graphs",
     "sort_gathers",
     "to_node",
 ]

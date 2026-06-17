@@ -1,6 +1,9 @@
 """Directed acyclic graphs for dependency management."""
 
 # Standard
+import functools
+import itertools
+import operator
 from collections.abc import Callable, Iterable, Iterator, Mapping
 from typing import Any, Self
 
@@ -240,6 +243,30 @@ class Graph[NodeT: str | Identifier]:
             visit(node)
 
         return tuple(order)
+
+    @staticmethod
+    def union(*graphs: "Graph[Identifier]") -> "Graph[Identifier]":
+        """
+        Compute the union of one or more graphs.
+
+        Args:
+            graphs: Graphs to merge together.
+
+        Returns:
+            Union of all `graphs`.
+
+        Raises:
+            ValueError: If any two graphs contain identical gather nodes.
+        """
+        overlaps = set()
+        for first, second in itertools.combinations(graphs, 2):
+            overlaps.update(node for node in first & second if node.is_gather)
+
+        if overlaps:
+            overlap_str = ", ".join(map(str, overlaps))
+            raise ValueError(f"names are not unique: {overlap_str}")
+
+        return functools.reduce(operator.or_, graphs)
 
 
 __all__ = ["Graph"]
