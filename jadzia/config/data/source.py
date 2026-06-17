@@ -1,8 +1,6 @@
 """Data source configuration."""
 
 # Standard
-import functools
-import operator
 from collections.abc import Iterable, Sequence
 from typing import ClassVar, overload
 
@@ -40,17 +38,36 @@ class SourceConfig(Config):
     manifest: FilePath
     archives: dict[str, ArchiveConfig]
 
-    def build_subgraph(self) -> Graph[Identifier]:
-        """Build a dependency graph based on this configuration."""
+    def build_subgraph(self, name: str) -> Graph[Identifier]:
+        """
+        Build a dependency graph based on this configuration.
+
+        Args:
+            name: Name of the data source.
+
+        Returns:
+            Newly built dependency graph.
+        """
         graph = Graph[Identifier]()
-        root = Identifier.gather(Reserved.SOURCE)
+        root = Identifier.gather(name)
         graph.update(root)
         for node in (
             Reserved.ID(DataSource.MANIFEST_KEY),
-            *map(Reserved.SOURCE, tuple(pl.read_parquet_schema(self.manifest))),
-            *map(Reserved.SOURCE, tuple(self.archives)),
+            *map(Reserved.SOURCE, pl.read_parquet_schema(self.manifest)),
         ):
             graph[node] = (root,)
+
+        for dest_key, config in self.archives.items():
+            dest_node = Reserved.SOURCE(dest_key)
+            if config.from_key:
+                arch = Identifier.gather(_archive_name(name, dest_key))
+                source_node = Reserved.SOURCE(config.from_key)
+                graph.update(arch)
+                graph[source_node] = (root,)
+                graph[arch] = (source_node,)
+                graph[dest_node] = (arch,)
+            else:
+                graph[dest_node] = (root,)
 
         return graph
 
@@ -76,6 +93,15 @@ class SourceConfig(Config):
 
 class SourceMappingConfig(MappingConfig[SourceConfig]):
     """Configuration for [jadzia.data.source.DataSource][]."""
+
+    @property
+    def archives(self) -> set[str]:
+        """The graph node names of all data archives."""
+        return {
+            _archive_name(name, key)
+            for name, config in self.items()
+            for key in config.archives
+        }
 
     @overload
     def build_instance(
@@ -162,8 +188,8 @@ class SourceMappingConfig(MappingConfig[SourceConfig]):
 
     def build_subgraph(self) -> Graph[Identifier]:
         """Build a dependency graph based on this configuration."""
-        graphs = (config.build_subgraph() for config in self.values())
-        return functools.reduce(operator.or_, graphs)
+        graphs = (config.build_subgraph(name) for name, config in self.items())
+        return Graph.union(*graphs)
 
 
 def _archive_name(data_source_name: str, archive_dest_key: str) -> str:

@@ -109,6 +109,16 @@ def test_source_config(parquet_file, lmdb_archive_dir):
     assert isinstance(shared_df, SharedDataFrame)
     assert config.share(df) is shared_df
 
+    deps = {
+        "source.*": (),
+        "id.manifest": ("source.*",),
+        "source.label": ("source.*",),
+        "source.ref": ("source.*",),
+        "archive.*": (),
+    }
+    graph = config.build_subgraph(name="source")
+    assert graph == Graph(deps).map(Identifier.from_str)
+
 
 @pytest.mark.parametrize("outputs", [None, {"source.val"}], ids=["all", "one"])
 def test_source_mapping(parquet_file, parquet_file_no_ref, lmdb_archive_dir, outputs):
@@ -124,19 +134,27 @@ def test_source_mapping(parquet_file, parquet_file_no_ref, lmdb_archive_dir, out
         ),
     )
 
+    assert config.archives == {"first[val]"}
+
     first_deps = {
-        "source.*": (),
-        "id.manifest": ("source.*",),
-        "source.label": ("source.*",),
-        "source.ref": ("source.*",),
-        "source.val": ("source.*",),
+        "first.*": (),
+        "id.manifest": ("first.*",),
+        "source.label": ("first.*",),
+        "source.ref": ("first.*",),
+        "first[val].*": ("source.ref",),
+        "source.val": ("first[val].*",),
     }
-    first_graph = config["first"].build_subgraph()
+    first_graph = config["first"].build_subgraph("first")
     assert first_graph == Graph(first_deps).map(Identifier.from_str)
 
-    second_deps = first_deps.copy()
-    second_deps.pop("source.ref")
-    second_graph = config["second"].build_subgraph()
+    second_deps = {
+        "second.*": (),
+        "archive.*": (),
+        "id.manifest": ("second.*",),
+        "source.label": ("second.*",),
+        "source.val": ("second.*",),
+    }
+    second_graph = config["second"].build_subgraph("second")
     assert second_graph == Graph(second_deps).map(Identifier.from_str)
 
     graph = config.build_subgraph()
@@ -294,7 +312,7 @@ def test_loader_config(parquet_file, lmdb_archive_dir, transform_outputs):
 
     config_data = {
         "source": {
-            "first": {
+            "src": {
                 "manifest": parquet_file,
                 "archives": {"val": {"path": lmdb_archive_dir, "from_key": "ref"}},
             },
@@ -310,11 +328,12 @@ def test_loader_config(parquet_file, lmdb_archive_dir, transform_outputs):
     config = DataLoaderConfig.model_validate(config_data, context=context)
 
     deps = {
-        "source.*": (),
-        "id.manifest": ("source.*",),
-        "source.label": ("source.*",),
-        "source.ref": ("source.*",),
-        "source.val": ("source.*",),
+        "src.*": (),
+        "id.manifest": ("src.*",),
+        "source.label": ("src.*",),
+        "source.ref": ("src.*",),
+        "src[val].*": ("source.ref",),
+        "source.val": ("src[val].*",),
         "exp.*": ("source.label",),
         "exp.output": ("exp.*",),
         "sin.*": ("source.label",),
