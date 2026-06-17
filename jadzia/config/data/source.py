@@ -141,7 +141,7 @@ class SourceMappingConfig(MappingConfig[SourceConfig]):
         mappings = {}
         for name in names:
             for dest_key, config in self[name].archives.items():
-                archive_name = f"{name}:{dest_key}"
+                archive_name = _archive_name(name, dest_key)
                 source_key = config.from_key or dest_key
                 mapping = ArchiveMapping(
                     archive_name,
@@ -164,6 +164,11 @@ class SourceMappingConfig(MappingConfig[SourceConfig]):
         """Build a dependency graph based on this configuration."""
         graphs = (config.build_subgraph() for config in self.values())
         return functools.reduce(operator.or_, graphs)
+
+
+def _archive_name(data_source_name: str, archive_dest_key: str) -> str:
+    """Return the name of an archive associated with a data source."""
+    return f"{data_source_name}[{archive_dest_key}]"
 
 
 __all__ = ["SourceConfig", "SourceMappingConfig"]
