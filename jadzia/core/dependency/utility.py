@@ -103,17 +103,18 @@ def find_separator(
             the node complement of the source set.
 
     Returns:
-        All nodes in the source set that are depended on by nodes in the sink set.
+        All nodes in the graph that depend on nodes in the source set
+            and are depended on by nodes in the sink set.
     """
-    source_set = set(filter(source, graph))
-
-    sink_set = set(filter(sink, graph)) if sink else set(graph)
+    gather_nodes = set(filter(is_gather, graph))
+    source_set = set(filter(source, gather_nodes))
+    sink_set = set(filter(sink, gather_nodes)) if sink else gather_nodes
     sink_set -= source_set
-
     return {
         identifier
-        for identifier in source_set
-        if any(
+        for identifier in graph
+        if any(graph[identifier] & source_set)
+        and any(
             neighbor
             for neighbor in sink_set
             if identifier in graph[neighbor]
