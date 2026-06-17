@@ -28,7 +28,7 @@ class Graph[NodeT: str | Identifier]:
         dependencies = dependencies or {}
         self._deps = {node: set(deps) for node, deps in dependencies.items()}
 
-    def __str__(self) -> str:
+    def __repr__(self) -> str:
         """String representation of the graph."""
         lines = ["Graph("]
         lines.extend(
