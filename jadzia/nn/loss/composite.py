@@ -108,7 +108,7 @@ class CompositeLoss(eqx.Module):
         references: dict[str, jax.Array],
         *,
         return_terms: Literal[True] = True,
-    ) -> jax.Array: ...
+    ) -> ReturnType: ...
 
     def __call__(
         self,
