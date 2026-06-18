@@ -31,6 +31,7 @@ class CompositeLoss(MappingConfig[LossFunction]):
         """Build an instance based on this configuration."""
         terms = tuple(
             CompositeLossTerm(
+                name=name,
                 weight=self[name].weight,
                 prediction_names=tuple(map(str, self[name].prediction_names)),
                 reference_names=tuple(map(str, self[name].reference_names)),

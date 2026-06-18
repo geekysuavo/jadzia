@@ -2,7 +2,7 @@
 
 # Standard
 from collections.abc import Callable
-from typing import NamedTuple
+from typing import Literal, NamedTuple, overload
 
 # Third party
 import equinox as eqx
@@ -19,12 +19,14 @@ class CompositeLossTerm(NamedTuple):
 
     Attributes:
         module: Module implementing the loss term.
+        name: Name of the loss term.
         weight: Weight of the loss term in the linear combination.
         prediction_names: Names of predicted values required by the term.
         reference_names: Names of reference values required by the term.
     """
 
     module: Callable[..., jax.Array]
+    name: str
     weight: float
     prediction_names: tuple[str, ...]
     reference_names: tuple[str, ...]
@@ -76,25 +78,63 @@ class CompositeLoss(eqx.Module):
         terms: Details about each term in the sum.
     """
 
+    class ReturnType(NamedTuple):
+        """
+        Loss value and per-term values.
+
+        Attributes:
+            value: Composite loss function value.
+            terms: Dictionary of per-term values.
+        """
+
+        value: jax.Array
+        terms: dict[str, jax.Array]
+
     terms: tuple[CompositeLossTerm, ...]
+
+    @overload
+    def __call__(
+        self,
+        predictions: dict[str, jax.Array],
+        references: dict[str, jax.Array],
+        *,
+        return_terms: Literal[False] = False,
+    ) -> jax.Array: ...
+
+    @overload
+    def __call__(
+        self,
+        predictions: dict[str, jax.Array],
+        references: dict[str, jax.Array],
+        *,
+        return_terms: Literal[True] = True,
+    ) -> jax.Array: ...
 
     def __call__(
         self,
         predictions: dict[str, jax.Array],
         references: dict[str, jax.Array],
-    ) -> jax.Array:
+        *,
+        return_terms: bool = False,
+    ) -> jax.Array | ReturnType:
         """
         Compute and combine all loss term values.
 
         Args:
             predictions: Dictionary of predicted values.
             references: Dictionary of reference values.
+            return_terms: When true, additionally return per-term loss values.
 
         Returns:
-            $()$, Composite loss function value.
+            Composite loss function value, or the value with per-term values.
         """
         losses = [term(predictions, references) for term in self.terms]
-        return jnp.stack(losses).sum()
+        value = jnp.stack(losses).sum()
+        if return_terms:
+            terms = {term.name: loss for term, loss in zip(self.terms, losses)}
+            return self.ReturnType(value, terms)
+        else:
+            return value
 
 
 __all__ = ["CompositeLoss", "CompositeLossTerm"]
