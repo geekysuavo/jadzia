@@ -1,6 +1,7 @@
 """Runtime validation context."""
 
 # Standard
+from pathlib import Path
 from typing import Self
 
 # Third party
@@ -25,11 +26,21 @@ class RuntimeContext(Config):
     path: DirectoryPath
     seed: RandomSeed
 
+    @property
+    def checkpoint_dir(self) -> Path:
+        """Directory where checkpoints are stored."""
+        return self.path / "checkpoints"
+
 
 class WithRuntimeContext:
     """Mixin class that adds runtime context as a private attribute."""
 
     _context: RuntimeContext = PrivateAttr()
+
+    @property
+    def context(self) -> RuntimeContext:
+        """Attached runtime context."""
+        return self._context
 
     @model_validator(mode="after")
     def _get_runtime_context(self, info: ValidationInfo) -> Self:

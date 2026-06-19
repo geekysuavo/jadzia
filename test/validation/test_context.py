@@ -9,14 +9,14 @@ from jadzia.core.validation.context import RuntimeContext, WithRuntimeContext
 
 
 class ConfigWithContext(Config, WithRuntimeContext):
-    @property
-    def context(self) -> RuntimeContext:
-        return self._context
+    x: int = 1
 
 
 def test_context_provided(tmp_path):
     """Context is available when provided."""
     context = RuntimeContext(name="test", path=tmp_path)
+    assert context.checkpoint_dir.exists() is False
+
     config = ConfigWithContext.model_validate({}, context=context)
     assert config.context is context
 

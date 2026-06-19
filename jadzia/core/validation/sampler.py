@@ -53,7 +53,7 @@ class SamplerConfig(BuildableConfig[Sampler], WithRuntimeContext):
             Potentially updated data frames.
         """
         cls = type(self)
-        seed = self._context.seed
+        seed = self.context.seed
         kwargs = self.model_dump_for_instance()
         (sampler, dfs) = cls.instance_type.from_dfs(dfs, seed, **kwargs)
         return (sampler, tuple(dfs))
