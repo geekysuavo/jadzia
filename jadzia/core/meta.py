@@ -18,7 +18,7 @@ class AbstractDataclassMeta(ABCMeta):
     def __new__(cls, name, bases, dct):
         """Customize class behavior."""
         new_cls = super().__new__(cls, name, bases, dct)
-        return dataclass(new_cls, frozen=True)  # ty: ignore[no-matching-overload]
+        return dataclass(new_cls, frozen=True)
 
 
 __all__ = ["AbstractDataclassMeta"]
