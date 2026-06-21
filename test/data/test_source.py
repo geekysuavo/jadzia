@@ -56,6 +56,7 @@ def test_data_source(tmp_path, outputs, insert_id, emplace):
         outputs=outputs,
     )
 
+    assert "DataSource" in repr(source)
     assert len(source) == sum(num_rows)
 
     expected_keys = set("ixy") if emplace else set("ixyz")

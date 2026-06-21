@@ -55,13 +55,21 @@ class DataSource:
         self._archives = archives
         self._mappings = mappings
         self._insert_id = insert_id
-        self._outputs = outputs
+        self._outputs = tuple(sorted(outputs or ()))
 
         self._keys = tuple(sorted(dfs))
         self._sizes = tuple(len(dfs[key]) for key in self._keys)
 
         self._offsets = tuple(accumulate(self._sizes))
         self._len = self._offsets[-1]
+
+    def __repr__(self) -> str:
+        """String representation of the data source."""
+        cls_name = type(self).__name__
+        return (
+            f"{cls_name}(keys={self._keys}, sizes={self._sizes}, "
+            f"insert_id={self._insert_id}, outputs={self._outputs})"
+        )
 
     def __len__(self) -> int:
         """Total number of items available in the data source."""
