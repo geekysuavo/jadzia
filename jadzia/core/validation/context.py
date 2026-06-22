@@ -31,6 +31,37 @@ class RuntimeContext(Config):
         """Directory where checkpoints are stored."""
         return self.path / "checkpoints"
 
+    @classmethod
+    def from_dir(cls, directory: Path, seed: int | None = None) -> Self:
+        """
+        Load context from a possibly uninitialized directory.
+
+        Args:
+            directory: Directory to initialize or load context from.
+            seed: Optional random seed.
+
+        Returns:
+            Runtime context.
+        """
+        file = directory / "context.yaml"
+        if file.exists():
+            context = cls.from_yaml(file)
+            if seed and seed != context.seed:
+                raise ValueError("random seed does not match context")
+            else:
+                return context
+
+        data: dict[str, int | str | Path] = {
+            "path": directory.resolve(),
+            "name": directory.name,
+        }
+        if seed:
+            data["seed"] = seed
+
+        context = cls.model_validate(data)
+        context.to_yaml(file)
+        return context
+
 
 class WithRuntimeContext:
     """Mixin class that adds runtime context as a private attribute."""
