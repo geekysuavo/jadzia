@@ -76,9 +76,9 @@ def test_round_trip(tmp_path):
     for _ in range(3):
         assert next(data.dataloader_iter) == next(new_data.dataloader_iter)
 
-    loader_data = DataLoaderCheckpoint(new_data.step, new_data.dataloader_iter)
-    loaded = loader_data.load(checkpointer)
-    assert loaded.step == data.step
+    loader_data = DataLoaderCheckpoint(new_data.step, new_data.dataloader_iter, [])
+    with pytest.raises(KeyError, match=r"Requested checkpointables.*were not found"):
+        loader_data.load(checkpointer)
 
     model_data = ModelCheckpoint(new_data.model, new_data.model_state)
     checkpoint_dir = Path(checkpointer.latest.path)

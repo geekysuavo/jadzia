@@ -8,6 +8,7 @@ from typing import Self, overload
 # Third party
 import equinox as eqx
 import grain
+import jax
 import optax
 from orbax.checkpoint import v1 as ocp
 
@@ -101,6 +102,7 @@ class DataLoaderCheckpoint(Checkpointables):
 
     step: int
     dataloader_iter: grain.DataLoaderIterator
+    batches: list[tuple[dict[str, jax.Array], dict[str, jax.Array]]]
 
 
 __all__ = ["Checkpoint", "DataLoaderCheckpoint", "ModelCheckpoint"]
