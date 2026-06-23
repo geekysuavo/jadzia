@@ -1,14 +1,22 @@
 """Tests of checkpointing."""
 
+# Standard
+from pathlib import Path
+
 # Third party
 import equinox as eqx
 import grain
 import jax.random as jr
+import pytest
 from optax import adam
 from orbax.checkpoint import v1 as ocp
 
 # Dax
-from jadzia.engine.checkpointing import Checkpointables
+from jadzia.engine.checkpointing import (
+    Checkpoint,
+    DataLoaderCheckpoint,
+    ModelCheckpoint,
+)
 
 
 def test_round_trip(tmp_path):
@@ -16,7 +24,7 @@ def test_round_trip(tmp_path):
     num_records = 100
     source = tuple(range(num_records))
 
-    def make(*, seed: int, steps: int) -> Checkpointables:
+    def make(*, seed: int, steps: int) -> Checkpoint:
         (model, model_state) = eqx.nn.make_with_state(eqx.nn.MultiheadAttention)(
             num_heads=8,
             query_size=32,
@@ -35,7 +43,7 @@ def test_round_trip(tmp_path):
         for _ in range(steps):
             next(dataiter)
 
-        return Checkpointables(
+        return Checkpoint(
             step=steps,
             model=model,
             model_state=model_state,
@@ -67,3 +75,16 @@ def test_round_trip(tmp_path):
     assert loaded.optimizer_state == data.optimizer_state
     for _ in range(3):
         assert next(data.dataloader_iter) == next(new_data.dataloader_iter)
+
+    loader_data = DataLoaderCheckpoint(new_data.step, new_data.dataloader_iter)
+    loaded = loader_data.load(checkpointer)
+    assert loaded.step == data.step
+
+    model_data = ModelCheckpoint(new_data.model, new_data.model_state)
+    checkpoint_dir = Path(checkpointer.latest.path)
+    loaded = model_data.load(checkpoint_dir)
+    assert loaded.model == data.model
+    assert loaded.model_state.tree_flatten() == data.model_state.tree_flatten()
+
+    with pytest.raises(NotADirectoryError):
+        model_data.load(tmp_path / "does-not-exist")
