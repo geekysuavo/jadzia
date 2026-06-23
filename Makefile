@@ -1,4 +1,4 @@
-.PHONY: all clean doc lint ruff test ty
+.PHONY: all clean doc lint ruff test ty todo fixme
 
 all: lint test
 
@@ -20,8 +20,8 @@ clean:
 	find jadzia test -type d -name __pycache__ -exec rm -r {} \; || true
 	rm -rf jadzia.egg-info htmlcov
 
-fixme:
-	grep -RHIni -e fixme jadzia test || true
-
 todo:
 	grep -RHIni -e todo jadzia test || true
+
+fixme:
+	grep -RHIni -e fixme jadzia test || true
