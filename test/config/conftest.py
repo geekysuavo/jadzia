@@ -1,4 +1,4 @@
-"""Test configuration and fixtures."""
+"""Data configuration test fixtures."""
 
 # Third party
 import polars as pl
