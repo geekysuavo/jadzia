@@ -102,7 +102,7 @@ class DataLoaderCheckpoint(Checkpointables):
 
     step: int
     dataloader_iter: grain.DataLoaderIterator
-    batches: list[tuple[dict[str, jax.Array], dict[str, jax.Array]]]
+    batches: list[dict[str, jax.Array]]
 
 
 __all__ = ["Checkpoint", "DataLoaderCheckpoint", "ModelCheckpoint"]
