@@ -20,40 +20,6 @@ from jadzia.data.source import DataSource
 from jadzia.data.transform.special import ConvertNone, SelectKeys
 
 
-@pytest.fixture
-def parquet_file(tmp_path):
-    """File containing `parquet` data."""
-    data = {
-        "label": [0.1, 2.3, 4.5, 6.7, 8.9, 1.0],
-        "ref": ["foo", "bar"] * 3,
-    }
-    out_path = tmp_path / "manifest.parquet"
-    pl.DataFrame(data).write_parquet(out_path)
-    return out_path
-
-
-@pytest.fixture
-def parquet_file_no_ref(tmp_path):
-    """File containing `parquet` data that does not refer into an archive."""
-    data = {
-        "label": [1.5, 3.2, 2.6, 8.7, 4.9],
-        "val": [42, 57, 42, 57, 42],
-    }
-    out_path = tmp_path / "manifest-b.parquet"
-    pl.DataFrame(data).write_parquet(out_path)
-    return out_path
-
-
-@pytest.fixture
-def lmdb_archive_dir(tmp_path):
-    """Directory containing an `lmdb` archive."""
-    archive = DataArchive(tmp_path, read_only=False)
-    archive["foo"] = 42
-    archive["bar"] = 57
-
-    return tmp_path
-
-
 @pytest.mark.parametrize("buffer_size", [1, 10])
 @pytest.mark.parametrize("num_threads", [0, 6])
 def test_reader_config(num_threads, buffer_size):
