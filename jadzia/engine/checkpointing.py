@@ -63,7 +63,7 @@ class Checkpointables(metaclass=AbstractDataclassMeta):
         """
         if isinstance(checkpointer, Path):
             if checkpointer.is_dir():
-                load = partial(ocp.load_checkpointables, str(checkpointer))
+                load = partial(ocp.load_checkpointables, str(checkpointer.resolve()))
             else:
                 raise NotADirectoryError(str(checkpointer))
 
@@ -102,7 +102,7 @@ class DataLoaderCheckpoint(Checkpointables):
 
     step: int
     dataloader_iter: grain.DataLoaderIterator
-    batches: list[dict[str, jax.Array]]
+    batches: list[dict[str, jax.Array]] | None
 
 
 __all__ = ["Checkpoint", "DataLoaderCheckpoint", "ModelCheckpoint"]
