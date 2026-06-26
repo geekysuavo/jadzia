@@ -1,6 +1,7 @@
 """Tests of logging."""
 
 # Standard
+import logging
 import time
 
 # Third party
@@ -8,26 +9,26 @@ import jax
 import pytest
 
 # Dax
-import jadzia.engine.logging as logging
+import jadzia.engine.logging as log
 
 
 @pytest.mark.parametrize("jax_async", [False, True])
 @pytest.mark.parametrize(
     "func",
-    [logging.debug, logging.info, logging.warning, logging.error],
+    [log.debug, log.info, log.warning, log.error],
     ids=["debug", "info", "warning", "error"],
 )
-def test_debug(capsys, func, jax_async):
+def test_log(caplog, func, jax_async):
     """Messages may be logged to `stderr` at varying levels, default is `INFO`."""
-    msg = "hello {data}"
+    msg = f"hello {func.__name__} {{data}}"
     data = jax.numpy.array(1.5)
 
-    func(msg, data=data, jax_async=jax_async)
-    if jax_async:
-        time.sleep(0.05)
+    with caplog.at_level(logging.DEBUG, logger="jadzia"):
+        func(msg, data=data, jax_async=jax_async)
+        if jax_async:
+            time.sleep(0.05)
 
-    captured = capsys.readouterr()
-    if func is logging.debug:
-        assert captured.err == ""
-    else:
-        assert "hello 1.5" in captured.err
+        expected = f"hello {func.__name__} 1.5"
+        assert expected in caplog.text
+
+    caplog.clear()
