@@ -9,6 +9,29 @@ from orbax.checkpoint import v1 as ocp
 # Dax
 from jadzia.engine.checkpointing import ModelCheckpoint
 from jadzia.engine.inference import InferArgs
+from jadzia.engine.testing import TestArgs
+
+
+@pytest.mark.parametrize("num_steps", [None, 3])
+def test_testing(
+    model,
+    model_state,
+    loss_fn,
+    dataloader,
+    num_steps,
+):
+    """Testing loops return averaged loss values."""
+    args = TestArgs(model, model_state, loss_fn, dataloader, num_steps)
+
+    new_args = args.update(model, model_state)
+    assert isinstance(new_args, TestArgs)
+
+    out = args.run()
+    assert isinstance(out, tuple)
+
+    (loss, terms) = out
+    assert isinstance(loss, jax.Array)
+    assert terms["mse"] == loss
 
 
 def test_inference(
