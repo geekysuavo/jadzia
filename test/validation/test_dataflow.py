@@ -16,13 +16,14 @@ def deps():
         "src.feature": {"src.*"},
         "src.label": {"src.*"},
         "src.extra": {"src.*"},
+        "src.skip": {"src.*"},
         "foo.*": {"src.feature"},
         "foo.out": {"foo.*"},
         "foo.extra": {"foo.*"},
         "bar.*": {"src.label"},
         "bar.out": {"bar.*"},
         "bar.extra": {"bar.*"},
-        "sink.*": {"foo.out", "bar.out"},
+        "sink.*": {"foo.out", "bar.out", "src.skip"},
         "sink.out": {"sink.*"},
     }
 
@@ -36,16 +37,28 @@ def validate(deps):
         "sink": ("sink",),
     }
     allowed = {"pipe": ("src",), "sink": ("src", "pipe")}
-    return validate_data_flow(graph, terminal, assignment=assignment, allowed=allowed)
+    extra_reductions = {"skip": (("src", "sink"),)}
+    return validate_data_flow(
+        graph,
+        terminal,
+        assignment=assignment,
+        allowed=allowed,
+        extra_reductions=extra_reductions,
+    )
 
 
 def test_valid(deps):
     """Valid graphs return a dictionary of outputs from each assigned group."""
     sepsets = validate(deps)
     assert sepsets == {
-        "src": {Identifier("src", "feature"), Identifier("src", "label")},
+        "src": {
+            Identifier("src", "feature"),
+            Identifier("src", "label"),
+            Identifier("src", "skip"),
+        },
         "pipe": {Identifier("foo", "out"), Identifier("bar", "out")},
         "sink": set(),
+        "skip": {Identifier("src", "skip")},
     }
 
 

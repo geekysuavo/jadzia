@@ -21,6 +21,7 @@ def validate_data_flow(
     *,
     assignment: dict[str, Collection[str] | Collection[Identifier]],
     allowed: dict[str, Iterable[str]],
+    extra_reductions: dict[str, Iterable[tuple[str, str]]],
 ) -> dict[str, set[Identifier]]:
     """
     Validate an identifier graph and return per-component output sets.
@@ -30,6 +31,8 @@ def validate_data_flow(
         terminal: Terminal node in the graph, which is the only requirement.
         assignment: Named collections of node names.
         allowed: Dictionary of source collections allowed by each sink collection.
+        extra_reductions: Additional reductions to perform and include in the
+            returned dictionary of separators.
 
     Returns:
         Minimum required outputs for each collection in the `assignment`.
@@ -70,6 +73,11 @@ def validate_data_flow(
     result = {}
     for (source, sink), sepset in separators.items():
         result.setdefault(source, set()).update(sepset)
+
+    for key, pairs in extra_reductions.items():
+        for source, sink in pairs:
+            sepset = separators[(source, sink)]
+            result.setdefault(key, set()).update(sepset)
 
     return result
 
