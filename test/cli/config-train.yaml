@@ -1,0 +1,59 @@
+version: 0.1
+
+data:
+  train-test:
+    source:
+      mini-dataset:
+        manifest: !PARQUET_FILE
+        archives:
+          feature:
+            path: !LMDB_ARCHIVE_DIR
+            from_key: ref
+
+    sampler:
+      type: General
+      shuffle: true
+
+    transformations:
+      exp:
+        type: Unary
+        function: np.exp
+        input: source.label
+
+    batch:
+      size: 16
+
+model:
+  predict:
+    type: Linear
+    input: source.feature
+    num_input_features: 32
+    num_output_features: 1
+
+loss:
+  mse:
+    type: MSE
+    inputs:
+      yhat: predict.output
+      y: exp.output
+
+optimizer:
+  type: AdamW
+  learning_rate: 0.0003
+
+engine:
+  intervals:
+    logging: 4
+    testing: 4
+
+  checkpoints:
+    on_start: true
+    every: 4
+
+  training:
+    steps: 10
+    dataset: train-test
+
+  testing:
+    steps: 1
+    dataset: train-test

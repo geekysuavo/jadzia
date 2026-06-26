@@ -1,0 +1,42 @@
+version: 0.1
+
+data:
+  infer:
+    source:
+      mini-dataset:
+        manifest: !PARQUET_FILE
+        archives:
+          feature:
+            path: !LMDB_ARCHIVE_DIR
+            from_key: ref
+
+    sampler:
+      type: Sequential
+
+    transformations:
+      exp:
+        type: Unary
+        function: np.exp
+        input: source.label
+
+    batch:
+      size: 16
+
+model:
+  predict:
+    type: Linear
+    input: source.feature
+    num_input_features: 32
+    num_output_features: 1
+
+engine:
+  checkpoints:
+    every: 40
+
+  inference:
+    dataset: infer
+    capture:
+      - predict.output
+      - exp.output
+    checkpoint_dir: !CHECKPOINT_DIR
+    output_file: !OUTPUT_FILE
