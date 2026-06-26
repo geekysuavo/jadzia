@@ -50,9 +50,11 @@ class DataLoaderConfig(Config):
         (sampler, dfs) = self.sampler.build_instance(dfs)
         source = self.source.build_instance(dfs, outputs=source_outputs)
         del dfs
+
+        batch_outputs = set().union(source_outputs or (), transform_outputs or ())
         operations = (
             *self.transformations.build_instance(transform_outputs),
-            *self.batch.build_instance(transform_outputs),
+            *self.batch.build_instance(batch_outputs or None),
         )
         return grain.DataLoader(
             data_source=source,
