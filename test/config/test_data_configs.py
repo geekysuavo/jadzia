@@ -271,10 +271,17 @@ def test_composite_tform(unused_transform, dag, outputs):
     assert len(transforms) == 2 if outputs else 3
 
 
-@pytest.mark.parametrize("transform_outputs", [False, True])
-def test_loader_config(parquet_file, lmdb_archive_dir, transform_outputs):
+@pytest.mark.parametrize("specify_outputs", [False, True])
+def test_loader_config(parquet_file, lmdb_archive_dir, specify_outputs):
     """Data loader configurations build data loaders."""
-    transform_outputs = (Identifier("exp", "output"),) if transform_outputs else None
+    if specify_outputs:
+        source_outputs = (Identifier("source", "label"), Identifier("source", "ref"))
+        transform_outputs = (Identifier("exp", "output"),)
+        batch_outputs = (Identifier("source", "label"), Identifier("exp", "output"))
+    else:
+        source_outputs = None
+        transform_outputs = None
+        batch_outputs = None
 
     config_data = {
         "source": {
@@ -308,7 +315,11 @@ def test_loader_config(parquet_file, lmdb_archive_dir, transform_outputs):
     graph = config.build_subgraph()
     assert graph == Graph(deps).map(Identifier.from_str)
 
-    loader = config.build_instance(transform_outputs=transform_outputs)
+    loader = config.build_instance(
+        source_outputs=source_outputs,
+        transform_outputs=transform_outputs,
+        batch_outputs=batch_outputs,
+    )
     assert isinstance(loader, grain.DataLoader)
 
     batch = next(iter(loader))

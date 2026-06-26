@@ -44,17 +44,27 @@ class DataLoaderConfig(Config):
         self,
         source_outputs: Iterable[Identifier] | None = None,
         transform_outputs: Iterable[Identifier] | None = None,
+        batch_outputs: Iterable[Identifier] | None = None,
     ) -> grain.DataLoader:
-        """Build an instance based on this configuration."""
+        """
+        Build an instance based on this configuration.
+
+        Args:
+            source_outputs: Iterable of source outputs to include.
+            transform_outputs: Iterable of transformation outputs to include.
+            batch_outputs: Iterable of outputs to batch together.
+
+        Returns:
+            Newly built data loader.
+        """
         dfs = self.source.build_instance(outputs=source_outputs)
         (sampler, dfs) = self.sampler.build_instance(dfs)
         source = self.source.build_instance(dfs, outputs=source_outputs)
         del dfs
 
-        batch_outputs = set().union(source_outputs or (), transform_outputs or ())
         operations = (
             *self.transformations.build_instance(transform_outputs),
-            *self.batch.build_instance(batch_outputs or None),
+            *self.batch.build_instance(batch_outputs),
         )
         return grain.DataLoader(
             data_source=source,
