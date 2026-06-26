@@ -10,6 +10,53 @@ from orbax.checkpoint import v1 as ocp
 from jadzia.engine.checkpointing import ModelCheckpoint
 from jadzia.engine.inference import InferArgs
 from jadzia.engine.testing import TestArgs
+from jadzia.engine.training import TrainArgs
+
+
+@pytest.mark.parametrize("with_testing", [True, False])
+def test_training(
+    mocker,
+    model,
+    model_state,
+    loss_fn,
+    optimizer,
+    optimizer_state,
+    dataloader,
+    checkpointer,
+    with_testing,
+):
+    """Training loops return updated models."""
+    mocker.patch("jadzia.engine.training.log.info")
+
+    test_args = TestArgs(model, model_state, loss_fn, dataloader, num_steps=None)
+    args = TrainArgs(
+        model,
+        model_state,
+        loss_fn,
+        optimizer,
+        optimizer_state,
+        dataloader,
+        num_steps=4,
+        checkpointer=checkpointer,
+        test_args=test_args if with_testing else None,
+        test_every=2,
+        log_every=2,
+    )
+
+    out = args.run()
+    assert isinstance(out, TrainArgs)
+    assert out != args
+
+    # restarts from checkpoint.
+    new_out = args.run()
+    assert new_out.model == out.model
+    assert new_out.optimizer_state == out.optimizer_state
+
+    # exhausts data loader.
+    new_args = args._asdict()
+    new_args["num_steps"] = 20
+    new_args = TrainArgs(**new_args)
+    new_args.run()
 
 
 @pytest.mark.parametrize("num_steps", [None, 3])
