@@ -30,12 +30,8 @@ class DataArchive:
             raise FileNotFoundError(f"expected directory: {path}")
 
         self._read_only = read_only
-        self._env = lmdb.open(
-            str(path),
-            readonly=read_only,
-            lock=not read_only,
-            map_size=_MAP_SIZE,
-        )
+        self._path = str(path)
+        self._open_env()
 
     def __len__(self) -> int:
         """Number of items in the archive."""
@@ -114,6 +110,26 @@ class DataArchive:
         with contextlib.suppress(Exception):
             self._env.sync()
             self._env.close()
+
+    def __getstate__(self) -> dict:
+        """Return object state for serialization."""
+        state = self.__dict__.copy()
+        state["_env"] = None
+        return state
+
+    def __setstate__(self, state: dict):
+        """Reload object state from deserialization."""
+        self.__dict__.update(state)
+        self._open_env()
+
+    def _open_env(self):
+        """Open the `lmdb.Environment` object."""
+        self._env = lmdb.open(
+            self._path,
+            readonly=self._read_only,
+            lock=not self._read_only,
+            map_size=_MAP_SIZE,
+        )
 
     def keys(self) -> Iterator[str]:
         """Return an iterator over archive keys."""

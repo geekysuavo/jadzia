@@ -1,5 +1,8 @@
 """Tests of data archives."""
 
+# Standard
+import pickle
+
 # Third party
 import pytest
 
@@ -7,7 +10,7 @@ import pytest
 from jadzia.data.archive import DataArchive
 
 
-def test_shared_data_frame(tmp_path):
+def test_archive(tmp_path):
     """Data archives behave as persistent mappings."""
     with pytest.raises(FileNotFoundError):
         DataArchive(tmp_path / "does-not-exist")
@@ -51,3 +54,8 @@ def test_shared_data_frame(tmp_path):
 
     with pytest.raises(RuntimeError, match="read-only"):
         del reader["x"]
+
+    reader_pickled = pickle.dumps(reader)
+    del reader
+    reader = pickle.loads(reader_pickled)
+    assert tuple(reader.items()) == items
