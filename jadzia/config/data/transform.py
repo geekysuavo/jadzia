@@ -5,6 +5,7 @@ from collections.abc import Iterable
 
 # Third party
 import grain
+import jax
 from pydantic import PositiveInt
 
 # Dax
@@ -38,12 +39,15 @@ class BatchConfig(Config):
     def build_instance(
         self,
         outputs: Iterable[Identifier] | None = None,
+        *,
+        sharding: jax.sharding.Sharding | None = None,
     ) -> grain.transforms.Transformations:
         """
         Build an instance from this configuration.
 
         Args:
             outputs: Iterable of transformation outputs to include.
+            sharding: Optional batch data sharding information.
 
         Returns:
             Newly built batch transformations.
@@ -56,7 +60,10 @@ class BatchConfig(Config):
             keys = tuple(map(str, outputs))
             transforms = (*transforms, SelectKeys(keys))
 
-        batch_fn = Batcher(concat=tuple(map(str, self.concatenate or ())))
+        batch_fn = Batcher(
+            concat=set(map(str, self.concatenate or ())),
+            sharding=sharding,
+        )
         batch_transform = grain.transforms.Batch(
             batch_fn=batch_fn,
             batch_size=self.size,
