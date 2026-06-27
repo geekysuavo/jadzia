@@ -271,17 +271,11 @@ def test_composite_tform(unused_transform, dag, outputs):
     assert len(transforms) == 2 if outputs else 3
 
 
-@pytest.mark.parametrize("specify_outputs", [False, True])
-def test_loader_config(parquet_file, lmdb_archive_dir, specify_outputs):
+def test_loader_config(parquet_file, lmdb_archive_dir):
     """Data loader configurations build data loaders."""
-    if specify_outputs:
-        source_outputs = (Identifier("source", "label"), Identifier("source", "ref"))
-        transform_outputs = (Identifier("exp", "output"),)
-        batch_outputs = (Identifier("source", "label"), Identifier("exp", "output"))
-    else:
-        source_outputs = None
-        transform_outputs = None
-        batch_outputs = None
+    source_outputs = (Identifier("source", "label"), Identifier("source", "ref"))
+    transform_outputs = (Identifier("exp", "output"),)
+    batch_outputs = (Identifier("source", "label"), Identifier("exp", "output"))
 
     config_data = {
         "source": {

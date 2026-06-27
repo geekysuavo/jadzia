@@ -2,7 +2,6 @@
 
 # Standard
 from collections.abc import Iterable, Sequence
-from typing import cast
 
 # Third party
 import jax
@@ -15,19 +14,30 @@ type Value = bool | int | float | np.ndarray
 class Batcher:
     """Build batched data from sequences of elements."""
 
-    def __init__(self, concat: Iterable[str] | None = None):
+    def __init__(
+        self,
+        concat: Iterable[str] | None = None,
+        sharding: jax.sharding.Sharding | None = None,
+    ):
         """
         Initialize the batcher.
 
         Args:
             concat: Output keys that should be batched using [numpy.concat][]
                 instead of the default [numpy.stack][].
+            sharding: Sharding passed to [jax.device_put][].
         """
-        self._concat = dict.fromkeys(concat or (), 0)
+        self._sharding = sharding
+        self._concat = set(concat or ())
+        self._pad: dict[str, int] = {}
 
-    def __call__(self, elements: Sequence[dict[str, Value]]) -> dict[str, np.ndarray]:
+    def __call__(self, elements: Sequence[dict[str, Value]]) -> dict[str, jax.Array]:
         """
         Batch a sequence of elements.
+
+        Each element may contain [bool][], [int][], [float][] or [numpy.ndarray][]
+        values. When values are arrays, they may differ in shape along the first
+        dimension only.
 
         Args:
             elements: Sequence of dictionaries to batch into a single dictionary.
@@ -35,7 +45,10 @@ class Batcher:
         Returns:
             Dictionary of batched data.
         """
-        return jax.tree.map_with_path(self._batch_leaf, *elements)
+        return jax.device_put(
+            jax.tree.map_with_path(self._batch_leaf, *elements),
+            device=self._sharding,
+        )
 
     def _batch_leaf(
         self,
@@ -53,21 +66,56 @@ class Batcher:
             Array of batched values.
         """
         key = path[0].key
-        if key not in self._concat:
-            return np.stack(values)
+        arrays = tuple(np.asarray(value) for value in values)
+        if key in self._concat:
+            return self._concat_leaf(key, arrays)
+        else:
+            return self._stack_leaf(key, arrays)
 
-        assert all(isinstance(value, np.ndarray) for value in values)
-        values = cast(tuple[np.ndarray, ...], values)
+    def _concat_leaf(self, key: str, values: tuple[np.ndarray, ...]) -> np.ndarray:
+        """
+        Batch a sequence of values by concatenation followed by optional padding.
 
+        Args:
+            key: Output key.
+            values: Input values to concatenate.
+
+        Returns:
+            Array of concatenated values.
+        """
         concat_size = sum(value.shape[0] for value in values)
-        pad_to_size = max(self._concat[key], concat_size)
-        self._concat[key] = pad_to_size
+        pad_to_size = max(self._pad.get(key, 0), concat_size)
+        self._pad[key] = pad_to_size
 
         if concat_size < pad_to_size:
             shape = (pad_to_size - concat_size, *values[0].shape[1:])
             values = (*values, np.zeros(shape))
 
         return np.concat(values)
+
+    def _stack_leaf(self, key: str, values: tuple[np.ndarray, ...]) -> np.ndarray:
+        """
+        Batch a sequence of values by optional padding followed by stacking.
+
+        Args:
+            key: Output key.
+            values: Input values to stack.
+
+        Returns:
+            Array of stacked values.
+        """
+        shapes = {value.shape for value in values}
+        if len(shapes) == 1:
+            return np.stack(values)
+
+        sizes = tuple(value.shape[0] for value in values)
+        pad_to_size = max(self._pad.get(key, 0), max(sizes))
+        self._pad[key] = pad_to_size
+
+        def pad_fn(value: np.ndarray) -> np.ndarray:
+            return np.pad(value, ((0, pad_to_size - value.shape[0]),))
+
+        return np.stack(tuple(map(pad_fn, values)))
 
 
 __all__ = ["Batcher"]
