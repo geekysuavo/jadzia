@@ -22,6 +22,9 @@ data:
     batch:
       size: 16
 
+    workers:
+      count: 2
+
 model:
   predict:
     type: Linear
