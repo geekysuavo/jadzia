@@ -137,7 +137,6 @@ def train(
             dataiter = iter(dataloader)
             batch = next(dataiter)
 
-        print(batch)#FIXME
         (model, model_state, optimizer_state) = apply_step(
             model,
             model_state,
