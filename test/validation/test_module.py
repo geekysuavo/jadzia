@@ -148,14 +148,18 @@ def test_tuple_output():
     assert out.state is None
 
 
-def test_build_with_state():
+@pytest.mark.parametrize("with_sharding", [False, True])
+def test_build_with_state(with_sharding):
     """Modules may optionally built with initial state."""
+    (device, *_) = jax.devices()
+    sharding = jax.sharding.SingleDeviceSharding(device) if with_sharding else None
+
     config_cls = ModuleConfig.auto(eqx.nn.BatchNorm)
     config = config_cls(input_size=3, axis_name="batch", mode="batch")
 
-    module = config.build_instance()
+    module = config.build_instance(sharding=sharding)
     assert isinstance(module, eqx.nn.BatchNorm)
 
-    (module, state) = config.build_instance(with_state=True)
+    (module, state) = config.build_instance(sharding=sharding, with_state=True)
     assert isinstance(module, eqx.nn.BatchNorm)
     assert isinstance(state, eqx.nn.State)

@@ -84,6 +84,7 @@ class ModuleConfig(BuildableConfig[eqx.Module]):
         self,
         key: jax.Array | None = None,
         *,
+        sharding: jax.sharding.Sharding | None = None,
         with_state: Literal[False] = False,
     ) -> eqx.Module: ...
 
@@ -92,6 +93,7 @@ class ModuleConfig(BuildableConfig[eqx.Module]):
         self,
         key: jax.Array | None = None,
         *,
+        sharding: jax.sharding.Sharding | None = None,
         with_state: Literal[True] = True,
     ) -> tuple[eqx.Module, eqx.nn.State]: ...
 
@@ -99,6 +101,7 @@ class ModuleConfig(BuildableConfig[eqx.Module]):
         self,
         key: jax.Array | None = None,
         *,
+        sharding: jax.sharding.Sharding | None = None,
         with_state: bool = False,
     ) -> eqx.Module | tuple[eqx.Module, eqx.nn.State]:
         """
@@ -107,6 +110,7 @@ class ModuleConfig(BuildableConfig[eqx.Module]):
         Args:
             key: Pseudorandom number generator key. Must only be provided when
                 building instances of modules that require a key.
+            sharding: Optional module parameter sharding configuration.
             with_state: When true, build the module with its initial state.
 
         Returns:
@@ -127,9 +131,14 @@ class ModuleConfig(BuildableConfig[eqx.Module]):
             kwargs[_KEY] = key
 
         if with_state:
-            return eqx.nn.make_with_state(cls.instance_type)(**kwargs)
+            build_fn = eqx.nn.make_with_state(cls.instance_type)
         else:
-            return cls.instance_type(**kwargs)
+            build_fn = cls.instance_type
+
+        if sharding is not None:
+            return eqx.filter_shard(build_fn(**kwargs), sharding)
+        else:
+            return build_fn(**kwargs)
 
     @classmethod
     def auto_hook(
