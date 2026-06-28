@@ -8,7 +8,8 @@ dependencies = [
     "click>=8.4.2",
     "equinox>=0.13.8",
     "grain>=0.2.18",
-    "jax>=0.10.2",
+    "jax>=0.10.2; sys_platform == 'darwin'",
+    "jax[cuda13]>=0.10.2; sys_platform != 'darwin'",
     "lmdb>=2.2.1",
     "msgpack>=1.2.1",
     "numpy>=2.5.0",
@@ -27,14 +28,14 @@ doc = [
     "mkdocstrings>=1.0.4",
     "mkdocstrings-python>=2.0.5",
     "pymdown-extensions>=11.0",
-    "ruff>=0.15.19",
+    "ruff>=0.15.20",
 ]
 test = [
     "pytest>=9.1.1",
     "pytest-cov>=7.1.0",
     "pytest-mock>=3.15.1",
-    "ruff>=0.15.19",
-    "ty>=0.0.53",
+    "ruff>=0.15.20",
+    "ty>=0.0.55",
 ]
 
 [tool.uv]
