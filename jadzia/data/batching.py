@@ -97,7 +97,10 @@ class Batcher:
         """
         shapes = {value.shape for value in values}
         if len(shapes) == 1:
-            return np.stack(values)
+            if shapes.pop() == ():
+                return np.stack(values).reshape(-1, 1)
+            else:
+                return np.stack(values)
 
         sizes = tuple(value.shape[0] for value in values)
         pad_to_size = max(self._pad.get(key, 0), max(sizes))

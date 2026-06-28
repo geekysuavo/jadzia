@@ -32,10 +32,10 @@ def test_first_call(batch_size):
     assert isinstance(batch, dict)
     assert set(batch) == {"a", "b", "w", "x", "y", "z"}
 
-    assert batch["a"].shape == (batch_size,)
-    assert batch["b"].shape == (batch_size,)
+    assert batch["a"].shape == (batch_size, 1)
+    assert batch["b"].shape == (batch_size, 1)
     assert batch["w"].shape == (batch_size * (batch_size + 1) // 2, 4)
-    assert batch["x"].shape == (batch_size,)
+    assert batch["x"].shape == (batch_size, 1)
     assert batch["y"].shape == (batch_size, 2)
     assert batch["z"].shape == (batch_size, 3, 5)
 
