@@ -14,24 +14,18 @@ type Value = bool | int | float | np.ndarray
 class Batcher:
     """Build batched data from sequences of elements."""
 
-    def __init__(
-        self,
-        concat: Iterable[str] | None = None,
-        sharding: jax.sharding.Sharding | None = None,
-    ):
+    def __init__(self, concat: Iterable[str] | None = None):
         """
         Initialize the batcher.
 
         Args:
             concat: Output keys that should be batched using [numpy.concat][]
                 instead of the default [numpy.stack][].
-            sharding: Sharding passed to [jax.device_put][].
         """
-        self._sharding = sharding
         self._concat = set(concat or ())
         self._pad: dict[str, int] = {}
 
-    def __call__(self, elements: Sequence[dict[str, Value]]) -> dict[str, jax.Array]:
+    def __call__(self, elements: Sequence[dict[str, Value]]) -> dict[str, np.ndarray]:
         """
         Batch a sequence of elements.
 
@@ -45,10 +39,7 @@ class Batcher:
         Returns:
             Dictionary of batched data.
         """
-        return jax.device_put(
-            jax.tree.map_with_path(self._batch_leaf, *elements),
-            device=self._sharding,
-        )
+        return jax.tree.map_with_path(self._batch_leaf, *elements)
 
     def _batch_leaf(
         self,

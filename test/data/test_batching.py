@@ -4,7 +4,6 @@
 import random
 
 # Third party
-import jax.numpy as jnp
 import numpy as np
 import pytest
 
@@ -40,12 +39,12 @@ def test_first_call(batch_size):
     assert batch["y"].shape == (batch_size, 2)
     assert batch["z"].shape == (batch_size, 3, 5)
 
-    assert batch["a"].dtype == jnp.int32
-    assert batch["b"].dtype == jnp.float32
-    assert batch["w"].dtype == jnp.uint8
-    assert batch["x"].dtype == jnp.int16
-    assert batch["y"].dtype == jnp.float16
-    assert batch["z"].dtype == jnp.float32
+    assert batch["a"].dtype == np.int64
+    assert batch["b"].dtype == np.float64
+    assert batch["w"].dtype == np.uint8
+    assert batch["x"].dtype == np.int16
+    assert batch["y"].dtype == np.float16
+    assert batch["z"].dtype == np.float64
 
 
 def test_concat():
