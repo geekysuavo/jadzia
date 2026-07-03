@@ -16,7 +16,7 @@ dependencies = [
     "numpy>=2.5.0",
     "optax>=0.2.8",
     "orbax-checkpoint>=0.12.1",
-    "polars>=1.42.0",
+    "polars>=1.42.1",
     "pydantic>=2.13.4",
     "pyyaml>=6.0.3",
 ]
@@ -28,7 +28,7 @@ doc = [
     "mkdocs-gitbook>=0.0.1",
     "mkdocstrings>=1.0.4",
     "mkdocstrings-python>=2.0.5",
-    "pymdown-extensions>=11.0",
+    "pymdown-extensions>=11.0.1",
     "ruff>=0.15.20",
 ]
 test = [
@@ -36,7 +36,7 @@ test = [
     "pytest-cov>=7.1.0",
     "pytest-mock>=3.15.1",
     "ruff>=0.15.20",
-    "ty>=0.0.55",
+    "ty>=0.0.56",
 ]
 
 [tool.uv]
