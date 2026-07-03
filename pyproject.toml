@@ -11,6 +11,7 @@ dependencies = [
     "jax>=0.10.2; sys_platform == 'darwin'",
     "jax[cuda13]>=0.10.2; sys_platform != 'darwin'",
     "lmdb>=2.2.1",
+    "mpi4py>=4.1.2",
     "msgpack>=1.2.1",
     "numpy>=2.5.0",
     "optax>=0.2.8",

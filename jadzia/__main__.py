@@ -6,6 +6,7 @@ from shutil import copyfile
 
 # Third party
 import click
+import jax
 from pydantic import ValidationError
 
 
@@ -42,7 +43,12 @@ def main(
     output_dir: Path,
     seed: int | None,
 ):
-    """Run model training or inference."""
+    """
+    Run model training or inference.
+
+    Use `mpirun -n [num] jadzia ...` to run using multiple processes on a single
+    host. Otherwise, use `jadzia ...` to run using a single process.
+    """
     # Dax
     from jadzia.config.run.inference import InferenceRunConfig
     from jadzia.config.run.training import TrainingRunConfig
@@ -65,5 +71,7 @@ def main(
     config.build_instance().run()
 
 
-if __name__ == "__main__":
-    main()  # pragma: no cover
+if __name__ == "__main__":  # pragma: no cover
+    jax.distributed.initialize(cluster_detection_method="mpi4py")
+    main()
+    jax.distributed.shutdown()
