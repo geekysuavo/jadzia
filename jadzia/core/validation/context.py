@@ -5,6 +5,7 @@ from pathlib import Path
 from typing import Self
 
 # Third party
+import jax
 from pydantic import DirectoryPath, PrivateAttr, ValidationInfo, model_validator
 
 # Dax
@@ -30,6 +31,16 @@ class RuntimeContext(Config):
     def checkpoint_dir(self) -> Path:
         """Directory where checkpoints are stored."""
         return self.path / "checkpoints"
+
+    @property
+    def device_mesh(self) -> jax.sharding.Mesh:
+        """
+        Mesh declaring the available hardware resources.
+
+        Important:
+            This should never be called before [jax.distributed.initialize][].
+        """
+        return jax.make_mesh(axis_shapes=(jax.device_count(),), axis_names=("device",))
 
     @classmethod
     def from_dir(cls, directory: Path, seed: int | None = None) -> Self:
