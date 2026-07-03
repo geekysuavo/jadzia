@@ -37,6 +37,18 @@ def test_device_mesh(tmp_path):
     assert context.device_mesh.axis_names == ("device",)
 
 
+def test_data_sharding(tmp_path):
+    """Context has a `data_sharding` attribute."""
+    context = RuntimeContext(name="test", path=tmp_path)
+    assert context.data_sharding.replicated_axes == frozenset()
+
+
+def test_model_sharding(tmp_path):
+    """Context has a `model_sharding` attribute."""
+    context = RuntimeContext(name="test", path=tmp_path)
+    assert context.model_sharding.replicated_axes == frozenset({"device"})
+
+
 @pytest.mark.parametrize("seed", [None, 528491])
 def test_context_from_dir(tmp_path, seed):
     """Context may be attached to a directory."""

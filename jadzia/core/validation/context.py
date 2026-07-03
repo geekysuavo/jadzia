@@ -42,6 +42,26 @@ class RuntimeContext(Config):
         """
         return jax.make_mesh(axis_shapes=(jax.device_count(),), axis_names=("device",))
 
+    @property
+    def data_sharding(self) -> jax.sharding.Sharding:
+        """
+        Sharding used to fan out batch data onto devices.
+
+        Important:
+            This should never be called before [jax.distributed.initialize][].
+        """
+        return jax.sharding.NamedSharding(self.device_mesh, jax.P("device"))
+
+    @property
+    def model_sharding(self) -> jax.sharding.Sharding:
+        """
+        Sharding used to replicate model weights across all devices.
+
+        Important:
+            This should never be called before [jax.distributed.initialize][].
+        """
+        return jax.sharding.NamedSharding(self.device_mesh, jax.P())
+
     @classmethod
     def from_dir(cls, directory: Path, seed: int | None = None) -> Self:
         """
