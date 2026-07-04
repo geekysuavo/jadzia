@@ -13,7 +13,7 @@ from jadzia.core.dependency.identifier import Identifier
 @pytest.mark.parametrize("dag", [True, False])
 @pytest.mark.parametrize("unused_block", [False, True])
 @pytest.mark.parametrize("missing_ref", [False, True])
-def test_model_config(missing_ref, unused_block, dag):
+def test_model_config(runtime_context, missing_ref, unused_block, dag):
     """The composite model configuration validates and builds a module correctly."""
     config_data = {
         "blk_in": {
@@ -62,10 +62,10 @@ def test_model_config(missing_ref, unused_block, dag):
 
     if unused_block and missing_ref:
         with pytest.raises(ValueError, match="reference blocks are missing"):
-            CompositeModel.model_validate(config_data)
+            CompositeModel.model_validate(config_data, context=runtime_context)
         return
 
-    config = CompositeModel.model_validate(config_data)
+    config = CompositeModel.model_validate(config_data, context=runtime_context)
     assert config.requires_key is True
 
     if not dag:
@@ -85,16 +85,17 @@ def test_model_config(missing_ref, unused_block, dag):
     assert isinstance(state, eqx.nn.State)
 
 
-def test_model_without_key():
+def test_model_without_key(runtime_context):
     """The composite model only accepts a key when its modules require one."""
-    config = CompositeModel(
-        split={
+    config_data = {
+        "split": {
             "type": "UnstackFission",
             "input": "batch.data",
             "outputs": ["first", "second"],
             "axis": -1,
         },
-    )
+    }
+    config = CompositeModel.model_validate(config_data, context=runtime_context)
 
     key = jr.key(42)
     outputs = (Identifier("split", "first"),)
@@ -110,18 +111,19 @@ def test_model_without_key():
     assert isinstance(state, eqx.nn.State)
 
 
-def test_model_with_virtual():
+def test_model_with_virtual(runtime_context):
     """Virtual blocks are not built into modules."""
-    config = CompositeModel(
-        query={
+    config_data = {
+        "query": {
             "type": "Linear",
             "input": "a.x",
             "num_input_features": 8,
             "num_output_features": 1,
         },
-        copy={"type": "VirtualLinear", "input": "a.z", "ref": "query"},
-        fusion={"type": "SumFusion", "inputs": ["query.output", "copy.output"]},
-    )
+        "copy": {"type": "VirtualLinear", "input": "a.z", "ref": "query"},
+        "fusion": {"type": "SumFusion", "inputs": ["query.output", "copy.output"]},
+    }
+    config = CompositeModel.model_validate(config_data, context=runtime_context)
 
     key = jr.key(42)
     outputs = (Identifier("fusion", "output"),)

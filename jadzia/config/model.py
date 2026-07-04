@@ -14,12 +14,13 @@ from jadzia.config.block import Block
 from jadzia.core.dependency.identifier import Identifier
 from jadzia.core.dependency.utility import sort_gathers
 from jadzia.core.validation.block import Virtual
+from jadzia.core.validation.context import WithRuntimeContext
 from jadzia.core.validation.mapping import NodeMappingConfig
 from jadzia.nn.model import CompositeModel as CompositeModelImpl
 from jadzia.nn.model import CompositeModelBlock
 
 
-class CompositeModel(NodeMappingConfig[Block]):
+class CompositeModel(NodeMappingConfig[Block], WithRuntimeContext):
     """Configuration for [jadzia.nn.model.CompositeModel][]."""
 
     instance_type: ClassVar[type[eqx.Module]] = CompositeModelImpl
@@ -112,9 +113,11 @@ class CompositeModel(NodeMappingConfig[Block]):
         }
 
         if with_state:
-            return eqx.nn.make_with_state(CompositeModelImpl)(**kwargs)
+            build_fn = eqx.nn.make_with_state(CompositeModelImpl)
         else:
-            return CompositeModelImpl(**kwargs)
+            build_fn = CompositeModelImpl
+
+        return eqx.filter_shard(build_fn(**kwargs), self.context.model_sharding)
 
     @model_validator(mode="after")
     def _valid_source_blocks(self) -> Self:

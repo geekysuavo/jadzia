@@ -26,13 +26,14 @@ def test_loss_function_configs(data):
     assert isinstance(obj, config.instance_type)
 
 
-def test_composite_loss_config():
+def test_composite_loss_config(runtime_context):
     """The composite loss configuration validates and builds a module correctly."""
-    config = CompositeLoss(
-        mse={"type": "MSE", "inputs": {"yhat": "foo.yhat", "y": "foo.y"}},
-        huber={"type": "Huber", "inputs": {"yhat": "bar.yhat", "y": "bar.y"}},
-        direct={"type": "Direct", "inputs": {"prediction": "zoo.yhat"}},
-    )
+    config_data = {
+        "mse": {"type": "MSE", "inputs": {"yhat": "foo.yhat", "y": "foo.y"}},
+        "huber": {"type": "Huber", "inputs": {"yhat": "bar.yhat", "y": "bar.y"}},
+        "direct": {"type": "Direct", "inputs": {"prediction": "zoo.yhat"}},
+    }
+    config = CompositeLoss.model_validate(config_data, context=runtime_context)
 
     (graph, node) = config.build_subgraph()
     assert node in graph

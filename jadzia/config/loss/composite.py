@@ -11,12 +11,13 @@ import equinox as eqx
 from jadzia.config.loss.function import LossFunction
 from jadzia.core.dependency.graph import Graph
 from jadzia.core.dependency.identifier import Identifier, Reserved
+from jadzia.core.validation.context import WithRuntimeContext
 from jadzia.core.validation.mapping import MappingConfig
 from jadzia.nn.loss.composite import CompositeLoss as CompositeLossImpl
 from jadzia.nn.loss.composite import CompositeLossTerm
 
 
-class CompositeLoss(MappingConfig[LossFunction]):
+class CompositeLoss(MappingConfig[LossFunction], WithRuntimeContext):
     """
     Configuration for [jadzia.nn.loss.composite.CompositeLoss][].
 
@@ -39,7 +40,8 @@ class CompositeLoss(MappingConfig[LossFunction]):
             )
             for name in sorted(self)
         )
-        return CompositeLossImpl(terms=terms)
+        module = CompositeLossImpl(terms=terms)
+        return eqx.filter_shard(module, self.context.model_sharding)
 
     def build_subgraph(self) -> tuple[Graph[Identifier], Identifier]:
         """

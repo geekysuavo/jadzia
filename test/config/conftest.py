@@ -5,7 +5,14 @@ import polars as pl
 import pytest
 
 # Dax
+from jadzia.core.validation.context import RuntimeContext
 from jadzia.data.archive import DataArchive
+
+
+@pytest.fixture
+def runtime_context(tmp_path):
+    """Example runtime context associated with an empty directory."""
+    return RuntimeContext(name="test", path=tmp_path)
 
 
 @pytest.fixture(scope="session")
