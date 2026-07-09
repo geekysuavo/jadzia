@@ -78,6 +78,7 @@ class TrainingRunConfig(RunConfig):
             optimizer=optimizer,
             optimizer_state=optimizer_state,
             dataloader=dataloaders[Dataset.TRAIN],
+            sharding=self.context.data_sharding,
             num_steps=self.engine.training.steps,
             checkpointer=checkpointer,
             test_args=TestArgs(
@@ -85,6 +86,7 @@ class TrainingRunConfig(RunConfig):
                 model_state=model_state,
                 loss_fn=loss_fn,
                 dataloader=dataloaders[Dataset.TEST],
+                sharding=self.context.data_sharding,
                 num_steps=self.engine.testing.steps,
             ),
             test_every=self.engine.intervals.testing,

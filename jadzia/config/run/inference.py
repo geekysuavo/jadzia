@@ -60,6 +60,7 @@ class InferenceRunConfig(RunConfig):
             model=model,
             model_state=model_state,
             dataloader=dataloader,
+            sharding=self.context.data_sharding,
             checkpointer=checkpointer,
             capture=tuple(map(str, dict.fromkeys(self.engine.inference.capture))),
             checkpoint_dir=self.engine.inference.checkpoint_dir,

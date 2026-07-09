@@ -22,13 +22,14 @@ def test_training(
     optimizer,
     optimizer_state,
     dataloader,
+    sharding,
     checkpointer,
     with_testing,
 ):
     """Training loops return updated models."""
     mocker.patch("jadzia.engine.training.log.info")
 
-    test_args = TestArgs(model, model_state, loss_fn, dataloader, num_steps=None)
+    test_args = TestArgs(model, model_state, loss_fn, dataloader, sharding, None)
     args = TrainArgs(
         model,
         model_state,
@@ -36,6 +37,7 @@ def test_training(
         optimizer,
         optimizer_state,
         dataloader,
+        sharding,
         num_steps=4,
         checkpointer=checkpointer,
         test_args=test_args if with_testing else None,
@@ -65,10 +67,11 @@ def test_testing(
     model_state,
     loss_fn,
     dataloader,
+    sharding,
     num_steps,
 ):
     """Testing loops return averaged loss values."""
-    args = TestArgs(model, model_state, loss_fn, dataloader, num_steps)
+    args = TestArgs(model, model_state, loss_fn, dataloader, sharding, num_steps)
 
     new_args = args.update(model, model_state)
     assert isinstance(new_args, TestArgs)
@@ -87,6 +90,7 @@ def test_inference(
     model_state,
     optimizer_state,
     dataloader,
+    sharding,
     checkpointer,
 ):
     """Inference loops return data frames."""
@@ -103,6 +107,7 @@ def test_inference(
         model,
         model_state,
         dataloader,
+        sharding,
         capture,
         checkpointer,
         checkpoint_dir=model_dir / "0",

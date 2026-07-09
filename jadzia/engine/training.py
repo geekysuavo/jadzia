@@ -15,6 +15,7 @@ import jadzia.engine.logging as log
 from jadzia.core.dependency.identifier import Reserved
 from jadzia.engine.checkpointing import Checkpoint
 from jadzia.engine.testing import TestArgs
+from jadzia.engine.utility import make_send_to_device
 from jadzia.nn.loss.composite import CompositeLoss
 from jadzia.nn.model import CompositeModel
 
@@ -83,6 +84,7 @@ def train(
     optimizer: GradientTransformation,
     optimizer_state: OptState,
     dataloader: DataLoader,
+    sharding: jax.sharding.Sharding,
     num_steps: int,
     checkpointer: ocp.training.Checkpointer | None = None,
     test_args: TestArgs | None = None,
@@ -99,6 +101,7 @@ def train(
         optimizer: Optimizer.
         optimizer_state: Initial optimizer state.
         dataloader: Data loader.
+        sharding: Batch data sharding.
         num_steps: Number of training steps.
         checkpointer: Optional checkpointer.
         test_args: Optional testing function arguments.
@@ -110,6 +113,7 @@ def train(
         Updated model state.
         Updated optimizer state.
     """
+    send_to_device = make_send_to_device(sharding)
     dataiter = iter(dataloader)
     begin_step = 0
 
@@ -132,7 +136,7 @@ def train(
 
     for step in range(begin_step, num_steps):
         try:
-            batch = next(dataiter)
+            batch = send_to_device(next(dataiter))
         except StopIteration:
             dataiter = iter(dataloader)
             batch = next(dataiter)
@@ -182,6 +186,7 @@ class TrainArgs(NamedTuple):
     optimizer: GradientTransformation
     optimizer_state: OptState
     dataloader: DataLoader
+    sharding: jax.sharding.Sharding
     num_steps: int
     checkpointer: ocp.training.Checkpointer | None
 
@@ -209,6 +214,7 @@ class TrainArgs(NamedTuple):
             optimizer=self.optimizer,
             optimizer_state=optimizer_state,
             dataloader=self.dataloader,
+            sharding=self.sharding,
             num_steps=self.num_steps,
             checkpointer=self.checkpointer,
             test_args=test_args,

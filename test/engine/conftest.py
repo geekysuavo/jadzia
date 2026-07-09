@@ -6,6 +6,7 @@ import random
 # Third party
 import equinox as eqx
 import grain
+import jax
 import jax.random as jr
 import numpy as np
 import optax
@@ -83,6 +84,13 @@ def dataloader():
         sampler=grain.samplers.SequentialSampler(num_records),
         operations=(grain.transforms.Batch(batch_size=8),),
     )
+
+
+@pytest.fixture(scope="session")
+def sharding():
+    """Example data sharding."""
+    mesh = jax.make_mesh((jax.device_count(),), ("device",))
+    return jax.sharding.NamedSharding(mesh, jax.P())
 
 
 @pytest.fixture(params=(True, False))

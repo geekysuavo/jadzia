@@ -17,6 +17,7 @@ from orbax.checkpoint import v1 as ocp
 # Dax
 import jadzia.engine.logging as log
 from jadzia.engine.checkpointing import DataLoaderCheckpoint, ModelCheckpoint
+from jadzia.engine.utility import make_send_to_device
 from jadzia.nn.model import CompositeModel
 
 
@@ -45,6 +46,7 @@ def infer(
     model: CompositeModel,
     model_state: eqx.nn.State,
     dataloader: DataLoader,
+    sharding: jax.sharding.Sharding,
     capture: tuple[str, ...],
     checkpointer: ocp.training.Checkpointer | None,
     checkpoint_dir: Path,
@@ -57,6 +59,7 @@ def infer(
         model: Model to evaluate.
         model_state: Model state.
         dataloader: Data loader.
+        sharding: Batch data sharding.
         capture: Keys (data frame columns) to capture in the output.
         checkpointer: Optional checkpointer used to save inference checkpoints.
         checkpoint_dir: Directory to load the model and its state from.
@@ -65,6 +68,7 @@ def infer(
     Returns:
         Output data frame.
     """
+    send_to_device = make_send_to_device(sharding)
     dataiter = iter(dataloader)
     begin_step = 0
     buffer = []
@@ -79,7 +83,6 @@ def infer(
         begin_step = reloaded.step + 1
         dataiter = reloaded.dataloader_iter
         del reloaded
-
 
     def combine(
         xy: dict[str, jax.Array],
@@ -102,7 +105,7 @@ def infer(
 
     for step in itertools.count(start=begin_step):
         try:
-            batch = next(dataiter)
+            batch = send_to_device(next(dataiter))
         except StopIteration:
             break
 
@@ -133,6 +136,7 @@ class InferArgs(NamedTuple):
     model: CompositeModel
     model_state: eqx.nn.State
     dataloader: DataLoader
+    sharding: jax.sharding.Sharding
     capture: tuple[str, ...]
     checkpointer: ocp.training.Checkpointer | None
     checkpoint_dir: Path
