@@ -1,7 +1,8 @@
 """Validated mapping classes."""
 
 # Standard
-from typing import Iterable, Iterator, cast
+from collections.abc import Iterable, Iterator
+from typing import cast
 
 # Third party
 from pydantic import ConfigDict, RootModel

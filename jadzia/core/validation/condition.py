@@ -1,11 +1,13 @@
 """Condition string validation."""
 
 # Standard
+import contextlib
 import json
 import operator
 import re
+from collections.abc import Mapping
 from enum import StrEnum
-from typing import Annotated, Any, ClassVar, Mapping, Self
+from typing import Annotated, Any, ClassVar, Self
 
 # Third party
 from pydantic import (
@@ -159,15 +161,11 @@ class ForEach(Config):
 
 def _validate_union(value: Any) -> Condition | ForEach:
     """Convert a string into a condition or for-each expression."""
-    try:
+    with contextlib.suppress(TypeError, ValueError):
         return Condition.from_str(value)
-    except Exception:
-        pass
 
-    try:
+    with contextlib.suppress(TypeError, ValueError):
         return ForEach.from_str(value)
-    except Exception:
-        pass
 
     raise ValueError("invalid condition or for-each expression")
 

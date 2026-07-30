@@ -53,8 +53,7 @@ def _log_when_ready(
     def log_thread(func: Callable[[str], None], msg: str, kwargs: dict[str, Any]):
         while not all(jax.tree.map(is_ready, kwargs)):
             time.sleep(poll_interval)  # pragma: no cover
-        else:
-            func(msg.format(**kwargs))
+        func(msg.format(**kwargs))
 
     host_kwargs = jax.copy_to_host_async(kwargs)
     thread = threading.Thread(target=log_thread, args=(func, msg, host_kwargs))

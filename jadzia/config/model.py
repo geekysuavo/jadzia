@@ -1,7 +1,8 @@
 """Composite model configuration."""
 
 # Standard
-from typing import ClassVar, Iterable, Literal, Self, overload
+from collections.abc import Iterable
+from typing import ClassVar, Literal, Self, overload
 
 # Third party
 import equinox as eqx

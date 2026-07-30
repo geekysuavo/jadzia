@@ -55,8 +55,8 @@ def test_composite_model():
     grads, grad_state = grad_fn(model, inputs, state)
     assert isinstance(grads, CompositeModel)
     assert isinstance(grad_state, eqx.nn.State)
-    for name in modules:
-        assert grads.modules[name].weight.shape == modules[name].weight.shape
-        assert grads.modules[name].bias.shape == modules[name].bias.shape
+    for name, module in modules.items():
+        assert grads.modules[name].weight.shape == module.weight.shape
+        assert grads.modules[name].bias.shape == module.bias.shape
         assert jnp.isfinite(grads.modules[name].weight).all()
         assert jnp.isfinite(grads.modules[name].bias).all()

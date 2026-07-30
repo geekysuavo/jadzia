@@ -7,10 +7,9 @@ from typing import Annotated, ClassVar
 from pydantic import Tag
 
 # Dax
-import jadzia.data.sampler.general as general
-import jadzia.data.sampler.sequential as sequential
 from jadzia.core.validation.sampler import SamplerConfig, SamplerInstanceType
 from jadzia.core.validation.union import UnionDiscriminator, UnionSerializer
+from jadzia.data.sampler import general, sequential
 
 
 class General(SamplerConfig):

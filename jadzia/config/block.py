@@ -8,12 +8,10 @@ import equinox as eqx
 from pydantic import Field, PositiveInt, Tag
 
 # Dax
-import jadzia.nn.fission as fission
-import jadzia.nn.fusion as fusion
-import jadzia.nn.linear as linear
 from jadzia.core.validation.block import FissionBlock, FusionBlock, SimpleBlock, Virtual
 from jadzia.core.validation.module import ModuleSignature
 from jadzia.core.validation.union import UnionDiscriminator, UnionSerializer
+from jadzia.nn import fission, fusion, linear
 
 
 class SplitFission(FissionBlock):

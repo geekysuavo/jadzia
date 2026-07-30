@@ -5,7 +5,7 @@ import functools
 import itertools
 import operator
 from collections.abc import Callable, Iterable, Iterator, Mapping
-from typing import Any, Self
+from typing import Self
 
 # Dax
 from jadzia.core.dependency.identifier import Identifier
@@ -38,7 +38,7 @@ class Graph[NodeT: str | Identifier]:
         lines.append(")")
         return "\n".join(lines)
 
-    def __eq__(self, other: Any) -> bool:
+    def __eq__(self, other: object) -> bool:
         """
         Whether two graphs are equivalent.
 
@@ -48,7 +48,7 @@ class Graph[NodeT: str | Identifier]:
         Returns:
             Whether this graph is equivalent to `other`.
         """
-        if type(self) is type(other):
+        if isinstance(other, Graph):
             return self.dependencies == other.dependencies
         else:
             return False

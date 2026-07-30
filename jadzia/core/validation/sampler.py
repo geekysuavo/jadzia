@@ -21,7 +21,6 @@ class Sampler(GrainSampler, Protocol):
         cls,
         dfs: Sequence[pl.DataFrame],
         seed: int | None,
-        **kwargs: Any,
     ) -> tuple[Self, Sequence[pl.DataFrame]]: ...
 
 

@@ -51,7 +51,8 @@ def _validate_function_str(value: Any) -> Callable:
     if callable(obj):
         return obj
     else:
-        raise ValueError(f"object '{value}' is not callable")
+        # called within pydantic validator; must raise ValueError
+        raise ValueError(f"object '{value}' is not callable")  # ruff: ignore[TRY004]
 
 
 def _serialize_function_str(func: Any) -> str:

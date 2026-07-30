@@ -130,7 +130,7 @@ def test_fission_output_names():
     # we have to bypass validation to reach the invalid state being tested.
     config = FissionBlock.auto(Fission).model_construct({"input": "a.b"})
     with pytest.raises(RuntimeError, match="contains invalid data"):
-        config.output_names
+        _ = config.output_names
 
 
 def test_incompatible_signatures_fail():

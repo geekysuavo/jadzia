@@ -127,7 +127,8 @@ def get_runtime_context(info: ValidationInfo) -> RuntimeContext:
     if isinstance(info.context, RuntimeContext):
         return info.context
     else:
-        raise ValueError("runtime context not available")
+        # called within pydantic validator; must raise ValueError
+        raise ValueError("runtime context not available")  # ruff: ignore[TRY004]
 
 
 __all__ = ["RuntimeContext", "WithRuntimeContext", "get_runtime_context"]

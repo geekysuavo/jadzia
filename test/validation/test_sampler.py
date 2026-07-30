@@ -14,6 +14,8 @@ from grain.sharding import NoSharding, ShardOptions
 from jadzia.core.validation.context import RuntimeContext
 from jadzia.core.validation.sampler import SamplerConfig
 
+_no_sharding = NoSharding()
+
 
 class ExampleSampler:
     def __init__(
@@ -21,7 +23,7 @@ class ExampleSampler:
         num_records: int,
         seed: int | None,
         key: int,
-        shard_options: ShardOptions = NoSharding(),
+        shard_options: ShardOptions = _no_sharding,
     ):
         self.key = key
 
