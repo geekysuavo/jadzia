@@ -15,8 +15,8 @@ dependencies = [
     "msgpack>=1.2.1",
     "numpy>=2.5.1",
     "optax>=0.2.8",
-    "orbax-checkpoint>=0.12.1",
-    "polars>=1.43.1",
+    "orbax-checkpoint>=0.12.2",
+    "polars>=1.43.2",
     "pydantic>=2.13.4",
     "pyyaml>=6.0.3",
 ]
@@ -29,14 +29,14 @@ doc = [
     "mkdocstrings>=1.0.6",
     "mkdocstrings-python>=2.0.5",
     "pymdown-extensions>=11.0.1",
-    "ruff>=0.16.0",
+    "ruff>=0.16.1",
 ]
 test = [
     "pytest>=9.1.1",
     "pytest-cov>=7.1.0",
     "pytest-mock>=3.15.1",
-    "ruff>=0.16.0",
-    "ty>=0.0.65",
+    "ruff>=0.16.1",
+    "ty>=0.0.69",
 ]
 
 [tool.uv]
