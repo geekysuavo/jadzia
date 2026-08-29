@@ -40,7 +40,7 @@ class RuntimeContext(Config):
         Important:
             This should never be called before [jax.distributed.initialize][].
         """
-        return jax.make_mesh(axis_shapes=(jax.device_count(),), axis_names=("device",))
+        return jax.make_mesh(axis_sizes=(jax.device_count(),), axis_names=("device",))
 
     @property
     def data_sharding(self) -> jax.sharding.Sharding:
